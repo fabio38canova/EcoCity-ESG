@@ -114,7 +114,7 @@
       <p class="cfg-warn">⚠ Configurazione mancante: apri il file, cerca "CONFIG SUPABASE" nello script e inserisci SUPABASE_URL e SUPABASE_ANON_KEY del tuo progetto. Vedi le istruzioni di pubblicazione.</p>
     </div>
 
-    <div id="ag-auth">
+    <div id="ag-auth" class="pane on">
       <div class="tabs">
         <button id="ag-tab-login" class="on">Accedi</button>
         <button id="ag-tab-reg">Registrati</button>
@@ -163,6 +163,12 @@
       <input type="text" id="ag-challenge-code" inputmode="numeric" maxlength="6" placeholder="000000">
       <button class="primary" id="ag-btn-challenge">Verifica</button>
       <div id="ag-challenge-msg" class="msg"></div>
+    </div>
+
+    <div id="ag-verify" class="pane">
+      <p style="font-size:13.5px;line-height:1.5;">Conferma il tuo indirizzo email per completare la registrazione.</p>
+      <button class="primary" id="ag-btn-verify">✅ Conferma email</button>
+      <div id="ag-verify-msg" class="msg"></div>
     </div>
   </div>
 </div>
@@ -861,7 +867,7 @@ function agShowMsg(id, text, ok){
   e.textContent = text; e.className = "msg " + (ok ? "ok" : "err");
 }
 function agShowPane(id){
-  ["ag-auth","ag-mfa-choice","ag-mfa-enroll","ag-mfa-challenge"].forEach(p=>{
+  ["ag-auth","ag-mfa-choice","ag-mfa-enroll","ag-mfa-challenge","ag-verify"].forEach(p=>{
     document.getElementById(p).classList.toggle("on", p===id);
   });
 }
@@ -894,6 +900,35 @@ async function agAfterLogin(){
 }
 async function agInit(){
   if(!sb){ document.getElementById("ag-config").style.display="block"; document.getElementById("ag-auth").style.display="none"; return; }
+
+  // ---- conferma email via link personalizzato (?token_hash=...&type=...) ----
+  // Il link di Supabase di default verifica il token al primo GET: se un antivirus/scanner
+  // della posta apre il link in anteprima, lo "consuma" prima del click reale dell'utente
+  // (errore otp_expired). Con questo link personalizzato la verifica parte SOLO al click
+  // sul pulsante, quindi un'apertura automatica del link non la consuma.
+  const params = new URLSearchParams(location.search);
+  const token_hash = params.get("token_hash");
+  const vtype = params.get("type");
+  if(token_hash && vtype){
+    agShowPane("ag-verify");
+    document.getElementById("ag-btn-verify").onclick = async ()=>{
+      document.getElementById("ag-btn-verify").disabled = true;
+      const { error } = await sb.auth.verifyOtp({ token_hash, type: vtype });
+      history.replaceState(null, "", location.pathname); // il link non è più riutilizzabile
+      if(error){
+        const msg = /expired|invalid/i.test(error.message)
+          ? "Link scaduto o già usato. Se lo hai già cliccato in precedenza prova semplicemente ad Accedere: potresti essere già confermato."
+          : error.message;
+        agShowMsg("ag-verify-msg", msg);
+        document.getElementById("ag-btn-verify").disabled = false;
+        return;
+      }
+      agShowMsg("ag-verify-msg", "Email confermata! Accesso in corso...", true);
+      setTimeout(agAfterLogin, 900);
+    };
+    return;
+  }
+
   const { data:{ session } } = await sb.auth.getSession();
   if(session) await agAfterLogin();
 }
