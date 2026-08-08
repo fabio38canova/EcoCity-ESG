@@ -287,9 +287,9 @@
 // 1. Crea un progetto su https://supabase.com (gratuito)
 // 2. Project Settings -> API: copia "Project URL" e "anon public key" qui sotto
 // 3. Vedi le istruzioni complete fornite a parte per email di conferma e Site URL
-const SUPABASE_URL = "INCOLLA_QUI_LA_TUA_PROJECT_URL";
-const SUPABASE_ANON_KEY = "INCOLLA_QUI_LA_TUA_ANON_KEY";
-const sb = (SUPABASE_URL.startsWith("http") && window.supabase)
+const SUPABASE_URL = "https://srpkzecstxfbzrlzzopd.supabase.co";
+const SUPABASE_ANON_KEY = "INCOLLA_QUI_LA_TUA_ANON_KEY";   // la chiave "anon public" è lunga e inizia con eyJ...
+const sb = (SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.startsWith("eyJ") && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 

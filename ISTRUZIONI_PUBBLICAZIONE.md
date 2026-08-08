@@ -18,8 +18,10 @@ versioni salvate (v1.0 → v2.1).
    e una regione vicina (es. Frankfurt/EU).
 3. Attendi 1-2 minuti che il progetto sia pronto.
 4. Nel menu a sinistra vai su **Project Settings → API**. Copia due valori:
-   - **Project URL** (es. `https://xxxxxxxx.supabase.co`)
-   - **anon public key** (una stringa lunga)
+   - **Project URL**: per questo progetto è `https://srpkzecstxfbzrlzzopd.supabase.co`
+     (ATTENZIONE: senza `/rest/v1/` in fondo — già inserita nel gioco)
+   - **anon public key**: è la stringa LUNGA che inizia con `eyJ...` nel
+     riquadro "Project API keys" (NON l'ID del progetto `srpkzecstxfbzrlzzopd`)
    Questi due valori NON sono segreti: sono fatti per stare in un sito
    pubblico (la sicurezza vera è garantita dal login, non dal nasconderli).
 5. Vai su **Authentication → Providers** e verifica che **Email** sia
@@ -67,9 +69,23 @@ versioni salvate (v1.0 → v2.1).
    un indirizzo tipo `https://github.com/tuonome/ecocity-esg.git`: copialo.
 
 ### 3.2 Collega il repository locale e carica i file
+
+> **PREREQUISITO**: sul PC deve essere installato Git, che su Windows non è
+> presente di serie. Due alternative:
+> - **GitHub Desktop** (consigliata, senza terminale): installa da
+>   https://desktop.github.com, accedi col tuo account GitHub, poi
+>   File → Add local repository → `D:\SimCityESG` → **Publish repository**.
+>   Fatto questo, salta direttamente al punto 3.3.
+> - **Git per Windows** (riga di comando): installa da
+>   https://git-scm.com/download/win con le impostazioni predefinite, poi
+>   CHIUDI E RIAPRI il terminale e prosegui con i comandi qui sotto.
 Apri un terminale nella cartella `D:\SimCityESG` (su Windows: tasto destro
 nella cartella → "Apri nel terminale" oppure `cd D:\SimCityESG` in un
-prompt) ed esegui, uno alla volta:
+prompt) ed esegui, uno alla volta, i comandi qui sotto.
+
+> NOTA: le righe con i tre apici (` ``` `) NON vanno digitate: sono solo la
+> cornice del blocco di codice. Copia e incolla SOLO i comandi al loro
+> interno, uno per volta, sostituendo `tuonome` con il tuo utente GitHub.
 
 ```bash
 git remote add origin https://github.com/tuonome/ecocity-esg.git
