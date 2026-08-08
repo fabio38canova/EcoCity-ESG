@@ -20,7 +20,7 @@
   main { flex:1; display:flex; min-height:0; position:relative; }
   /* menù di sistema */
   #btn-sys { background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:4px 12px; cursor:pointer; font-size:16px; }
-  #sysmenu { display:none; position:absolute; top:36px; right:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; z-index:30; min-width:170px; box-shadow:0 6px 22px rgba(0,0,0,.55); }
+  #sysmenu { display:none; position:absolute; top:36px; left:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; z-index:30; min-width:170px; box-shadow:0 6px 22px rgba(0,0,0,.55); }
   #sysmenu button { display:block; width:100%; text-align:left; background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:7px 10px; margin:3px 0; cursor:pointer; font-size:13px; }
   #sysmenu button:hover { background:#2a3f36; }
   /* finestra flottante di progettazione */
@@ -72,6 +72,15 @@
 <body>
 <header>
   <span class="logo">🌿 EcoCity ESG</span>
+  <span class="syswrap" style="position:relative;">
+    <button id="btn-sys" title="Menù di sistema">☰</button>
+    <div id="sysmenu">
+      <button id="btn-save">💾 Salva città</button>
+      <button id="btn-load">📂 Carica città</button>
+      <button id="btn-new">🆕 Nuova città</button>
+      <button id="btn-help">❓ Aiuto</button>
+    </div>
+  </span>
   <span class="stat" id="s-date">Gen 2026</span>
   <span class="stat" id="s-funds">€ 20.000</span>
   <span class="stat" id="s-pop">Pop. 0</span>
@@ -81,15 +90,6 @@
   </span>
   <span class="spd">
     <button id="zo" title="Zoom indietro">🔍−</button><button id="zi" title="Zoom avanti">🔍+</button>
-  </span>
-  <span class="syswrap" style="margin-left:auto;position:relative;">
-    <button id="btn-sys" title="Menù di sistema">☰</button>
-    <div id="sysmenu">
-      <button id="btn-save">💾 Salva città</button>
-      <button id="btn-load">📂 Carica città</button>
-      <button id="btn-new">🆕 Nuova città</button>
-      <button id="btn-help">❓ Aiuto</button>
-    </div>
   </span>
 </header>
 <main>
@@ -128,7 +128,6 @@
     <div class="esgbar" data-hint="F"><div class="lab"><span>F — Energia pulita</span><span id="vF">0.0</span></div><div class="tr"><div class="fl" id="bF"></div></div></div>
     <div class="esgbar" data-hint="G"><div class="lab"><span>G — Clima/CO₂</span><span id="vG">0.0</span></div><div class="tr"><div class="fl" id="bG"></div></div></div>
     <div id="badge" data-hint="badge">Livello: —</div>
-    <div style="font-size:11px;color:var(--dim)">Scala −1…+5 (0 = prassi corrente, 3 = buona pratica, 5 = eccellenza) secondo SCE 001:2026. *Aree D, B, C, E complete nelle Fasi 2–3.</div>
     <h3 style="margin-top:10px">Felicità</h3>
     <div class="esgbar" data-hint="H"><div class="tr"><div class="fl" id="bH" style="background:#e879a0"></div></div><div class="lab"><span></span><span id="vH">50%</span></div></div>
     <div id="news">Benvenuto, Sindaco! Fonda la tua città sostenibile.</div>
