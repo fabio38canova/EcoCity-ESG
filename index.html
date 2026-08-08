@@ -288,7 +288,7 @@
 // 2. Project Settings -> API: copia "Project URL" e "anon public key" qui sotto
 // 3. Vedi le istruzioni complete fornite a parte per email di conferma e Site URL
 const SUPABASE_URL = "https://srpkzecstxfbzrlzzopd.supabase.co/rest/v1/";
-const SUPABASE_ANON_KEY = "srpkzecstxfbzrlzzoapd";   // la chiave "anon public" è lunga e inizia con eyJ...
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycGt6ZWNzdHhmYnpybHp6b3BkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNjg4ODgsImV4cCI6MjEwMTc0NDg4OH0.yAhTKadZan4OxJTDm8Xc5PVXaUDdIaF0Jij9AvDgxxk";   // la chiave "anon public" è lunga e inizia con eyJ...
 const sb = (SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.startsWith("eyJ") && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
