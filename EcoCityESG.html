@@ -32,6 +32,16 @@
   #tip b { color:var(--acc); }
   /* toast di conferma azioni */
   #toast { display:none; position:fixed; bottom:26px; left:50%; transform:translateX(-50%); background:#101a15; border:1px solid var(--acc); color:var(--txt); padding:10px 20px; border-radius:10px; z-index:50; font-size:14px; box-shadow:0 8px 26px rgba(0,0,0,.6); }
+  /* selettore livello di difficoltà */
+  #diffsel { display:none; position:absolute; inset:0; background:rgba(10,16,13,.92); z-index:12; align-items:center; justify-content:center; }
+  #diffsel .card { max-width:640px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; }
+  #diffsel h2 { color:var(--acc); margin-bottom:4px; }
+  #diffsel .sub { color:var(--dim); font-size:13px; margin-bottom:12px; }
+  #diffsel .opts { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #diffsel .opt { background:#1c2a25; border:1px solid var(--line); border-radius:10px; padding:12px; cursor:pointer; text-align:left; color:var(--txt); }
+  #diffsel .opt:hover { border-color:var(--acc); background:#223730; }
+  #diffsel .opt b { color:var(--acc); display:block; margin-bottom:3px; }
+  #diffsel .opt small { color:var(--dim); font-size:11.5px; line-height:1.4; display:block; }
   #toolbar { width:170px; background:var(--panel); border-right:1px solid var(--line); padding:8px; overflow-y:auto; }
   #toolbar h4 { font-size:11px; text-transform:uppercase; color:var(--dim); margin:10px 0 4px; }
   #toolbar button { display:block; width:100%; text-align:left; background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:5px 8px; margin:2px 0; cursor:pointer; font-size:13px; }
@@ -94,16 +104,27 @@
 </header>
 <main>
   <div id="toolbar">
-    <h4>Zone</h4>
-    <button data-tool="res">🏠 Residenziale <small>€25</small></button>
-    <button data-tool="com">🏬 Commerciale <small>€25</small></button>
-    <button data-tool="ind">🏭 Industriale <small>€25</small></button>
+    <h4>Zone ATM</h4>
+    <button data-tool="res">🏠 Abitativo <small>€25</small></button>
+    <button data-tool="com">🏬 Terziario <small>€25</small></button>
+    <button data-tool="ind">🏭 Manifatturiero <small>€25</small></button>
     <h4>Reti</h4>
     <button data-tool="road">🛣 Strada <small>€10</small></button>
     <h4>Energia</h4>
     <button data-tool="coal">🏭 Carbone 200MW <small>€3000</small></button>
     <button data-tool="wind">🌬 Eolico 25MW <small>€600</small></button>
     <button data-tool="solar">☀ Solare 50MW <small>€1000</small></button>
+    <h4 class="f2">Acqua</h4>
+    <button class="f2" data-tool="wtower">🚰 Torre idrica <small>€500</small></button>
+    <button class="f2" data-tool="sewage">🌀 Depuratore <small>€1500</small></button>
+    <h4 class="f2">Servizi</h4>
+    <button class="f2" data-tool="police">🚓 Polizia <small>€500</small></button>
+    <button class="f2" data-tool="fire">🚒 Pompieri <small>€500</small></button>
+    <button class="f2" data-tool="hospital">🏥 Ospedale <small>€1200</small></button>
+    <button class="f2" data-tool="school">🏫 Scuola <small>€800</small></button>
+    <h4 class="f2">Rifiuti</h4>
+    <button class="f2" data-tool="dump">🗑 Discarica <small>€400</small></button>
+    <button class="f2" data-tool="recycle">♻ Centro riciclo <small>€1200</small></button>
     <h4>Verde</h4>
     <button data-tool="park">🌳 Parco <small>€120</small></button>
     <button data-tool="tree">🌲 Albero <small>€8</small></button>
@@ -116,16 +137,18 @@
   </div>
   <div id="viewport"><canvas id="cv"></canvas></div>
   <div id="side">
-    <h3>Domanda RCI</h3>
+    <h3>Domanda ATM</h3>
     <div class="demand" data-hint="rci">
-      <div class="d"><div class="bar"><i id="dR" style="background:#4caf50"></i></div>R</div>
-      <div class="d"><div class="bar"><i id="dC" style="background:#42a5f5"></i></div>C</div>
-      <div class="d"><div class="bar"><i id="dI" style="background:#ffb300"></i></div>I</div>
+      <div class="d"><div class="bar"><i id="dR" style="background:#4caf50"></i></div>A</div>
+      <div class="d"><div class="bar"><i id="dC" style="background:#42a5f5"></i></div>T</div>
+      <div class="d"><div class="bar"><i id="dI" style="background:#ffb300"></i></div>M</div>
     </div>
-    <h3>Cruscotto ESG (anteprima Fase 3)</h3>
+    <h3>Cruscotto ESG <span id="difflab" style="color:var(--dim);font-weight:400"></span></h3>
     <div class="esgbar" data-hint="A"><div class="lab"><span>A — Verde urbano</span><span id="vA">0.0</span></div><div class="tr"><div class="fl" id="bA"></div></div></div>
-    <div class="esgbar" data-hint="D"><div class="lab"><span>D — Mobilità*</span><span id="vD">—</span></div><div class="tr"><div class="fl" id="bD"></div></div></div>
-    <div class="esgbar" data-hint="F"><div class="lab"><span>F — Energia pulita</span><span id="vF">0.0</span></div><div class="tr"><div class="fl" id="bF"></div></div></div>
+    <div class="esgbar f2" data-hint="C"><div class="lab"><span>C — Rifiuti/Circolarità</span><span id="vC">—</span></div><div class="tr"><div class="fl" id="bC"></div></div></div>
+    <div class="esgbar f2" data-hint="D"><div class="lab"><span>D — Mobilità/Traffico</span><span id="vD">—</span></div><div class="tr"><div class="fl" id="bD"></div></div></div>
+    <div class="esgbar f2" data-hint="E"><div class="lab"><span>E — Servizi/Vivibilità</span><span id="vE">—</span></div><div class="tr"><div class="fl" id="bE"></div></div></div>
+    <div class="esgbar" data-hint="F"><div class="lab"><span>F — Energia/Acqua</span><span id="vF">0.0</span></div><div class="tr"><div class="fl" id="bF"></div></div></div>
     <div class="esgbar" data-hint="G"><div class="lab"><span>G — Clima/CO₂</span><span id="vG">0.0</span></div><div class="tr"><div class="fl" id="bG"></div></div></div>
     <div id="badge" data-hint="badge">Livello: —</div>
     <h3 style="margin-top:10px">Felicità</h3>
@@ -141,6 +164,18 @@
   </div>
   <div id="tip"></div>
   <div id="toast"></div>
+  <div id="diffsel">
+    <div class="card">
+      <h2>Scegli il livello di difficoltà</h2>
+      <div class="sub">La scelta vale per tutta la partita: una volta iniziato il gioco NON potrà più essere cambiata.</div>
+      <div class="opts">
+        <button class="opt" id="diff1"><b>🌱 Principiante</b><small>Solo le basi: zone ATM, strade, energia, verde. Fondi iniziali € 30.000, manutenzioni ridotte. Aree ESG: A, F, G.</small></button>
+        <button class="opt" id="diff2"><b>🌿 Facile</b><small>+ Acqua, servizi con raggi di copertura, rifiuti, traffico. Fondi € 20.000. Aree ESG: A, C, D, E, F, G.</small></button>
+        <button class="opt" id="diff3"><b>🌳 Normale</b><small>Come Facile, con economia più severa: fondi € 15.000 e manutenzioni +20%. (Sistemi completi in v3)</small></button>
+        <button class="opt" id="diff4"><b>🔥 Difficile</b><small>Per sindaci esperti: fondi € 12.000 e manutenzioni +40%. (Governance ed eventi in v4)</small></button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <div id="help">
@@ -148,9 +183,9 @@
     <h2>🌿 EcoCity ESG — Guida rapida</h2>
     <p>Sei il Sindaco. Fai crescere la città, ma verrai giudicato con il <b>Rating ESG</b> (standard SCE 001:2026), non solo con i soldi.</p>
     <ol>
-      <li>Il gioco inizia <b>in pausa</b> e in <b>📐 modalità progettazione</b>: traccia la tua città in bozza (vedi il PREVENTIVO), poi premi <b>✔ APPLICA</b> e avvia il tempo con <b>▶</b>.</li>
+      <li>Il gioco inizia <b>in pausa</b>: scegli il <b>livello di difficoltà</b> (definitivo per la partita!), progetta in <b>📐 modalità progettazione</b>, premi <b>✔ APPLICA</b> e avvia il tempo con <b>▶</b>.</li>
       <li>Costruisci <b>strade</b> 🛣 e una <b>centrale</b> (⚡ il carbone è economico ma inquina; eolico e solare sono puliti).</li>
-      <li>Traccia zone <b>R</b> (case), <b>C</b> (negozi) e <b>I</b> (fabbriche) vicino alle strade: cresceranno da sole se c'è energia e domanda.</li>
+      <li>Traccia zone <b>A</b>bitative (case), <b>T</b>erziarie (negozi) e <b>M</b>anifatturiere (fabbriche) vicino alle strade: cresceranno da sole se c'è energia e domanda. Da livello Facile servono anche 🚰 acqua, 🚓🚒🏥🏫 servizi e ♻ gestione rifiuti.</li>
       <li>Pianta <b>parchi e alberi</b>: alzano il punteggio Verde (Area A) e la felicità.</li>
       <li>Osserva il <b>Cruscotto ESG</b>: sotto 0 = città insostenibile; sopra 3 = buona pratica; l'obiettivo è il livello <b>Platino</b>.</li>
     </ol>
@@ -165,10 +200,21 @@
 const N = 64; let TS = 12;                   // griglia e dimensione tile (variabile per lo zoom)
 const ZOOMS = [8, 10, 12, 16, 22];           // livelli di zoom disponibili
 // Impronta ecologica per struttura (da −5 molto inquinante a +4 rigenerativa) — cfr. SCE 001:2026
-const ECO = {coal:-5, ind:-2, road:-1, com:-1, res:0, grass:0, water:1, tree:2, park:3, wind:4, solar:4};
-const COSTS = {res:25, com:25, ind:25, road:10, coal:3000, wind:600, solar:1000, park:120, tree:8, dozer:3};
+const ECO = {coal:-5, dump:-4, ind:-2, road:-1, com:-1, res:0, police:0, fire:0, grass:0,
+             water:1, wtower:1, hospital:1, school:1, recycle:1, sewage:2, tree:2, park:3, wind:4, solar:4};
+const COSTS = {res:25, com:25, ind:25, road:10, coal:3000, wind:600, solar:1000, park:120, tree:8, dozer:3,
+               wtower:500, sewage:1500, police:500, fire:500, hospital:1200, school:800, dump:400, recycle:1200};
 const MW = {coal:200, wind:25, solar:50};
-const MAINT = {road:.5, coal:60, wind:5, solar:6, park:2};
+const MAINT = {road:.5, coal:60, wind:5, solar:6, park:2,
+               wtower:6, sewage:20, police:10, fire:10, hospital:18, school:12, dump:8, recycle:18};
+const RADII = {wtower:10, police:9, fire:9, hospital:11, school:10};  // raggi di copertura (tile)
+// Livelli di difficoltà (scelti a inizio partita, NON modificabili dopo)
+const DIFF = {
+  1:{nome:"Principiante", fondi:30000, mult:0.8},
+  2:{nome:"Facile",       fondi:20000, mult:1.0},
+  3:{nome:"Normale",      fondi:15000, mult:1.2},
+  4:{nome:"Difficile",    fondi:12000, mult:1.4}
+};
 const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 
 // ============ STATO ============
@@ -178,7 +224,8 @@ let lastPowered = false;                                     // rete alimentata 
 let planMode = false, planActs = [], planBackup = null, planCost = 0, prevSpeed = 1;
 let firstStart = true;                                       // true finché non si preme "Inizia a governare"
 
-function newCity(){
+function newCity(diff){
+  diff = diff || 1;
   const g = [];
   // terreno: prato + fiume sinuoso + boschi
   for(let y=0;y<N;y++){ g.push([]); for(let x=0;x<N;x++) g[y].push({t:"grass",lvl:0}); }
@@ -192,8 +239,15 @@ function newCity(){
     for(let y=0;y<N;y++) for(let x=0;x<N;x++)
       if(g[y][x].t==="grass" && (x-cx)**2+(y-cy)**2 < r*r && Math.random()<.8) g[y][x].t="tree";
   }
-  return { g, funds:20000, month:0, year:2026, tax:7, pop:0, jobs:0,
-           demR:.6, demC:.1, demI:.4, happy:55, esg:{A:0,F:0,G:0}, news:[] };
+  return { g, funds:DIFF[diff].fondi, month:0, year:2026, tax:7, pop:0, jobs:0, diff,
+           demR:.6, demC:.1, demI:.4, happy:55, esg:{A:0,C:0,D:0,E:0,F:0,G:0}, news:[] };
+}
+// mostra/nasconde gli strumenti e le barre della Fase 2 in base alla difficoltà
+function applyDiffUI(){
+  const on = S.diff >= 2;
+  document.querySelectorAll(".f2").forEach(el=>{ el.style.display = on ? "" : "none"; });
+  const dl = document.getElementById("difflab");
+  dl.textContent = "· " + DIFF[S.diff].nome;
 }
 
 // ============ RENDER ============
@@ -201,7 +255,9 @@ const cv = document.getElementById("cv"), cx2 = cv.getContext("2d");
 cv.width = N*TS; cv.height = N*TS;
 const COL = { grass:"#3a5f3a", water:"#2b6ea8", tree:"#1e4520", road:"#5a5a5a",
               res:["#4d7a4d","#5f9c5f","#74bd74","#8fdf8f"], com:["#3d6a94","#4d85ba","#5da0df","#79bbf2"],
-              ind:["#8a7a3a","#a8963f","#c7b148","#e0cc55"], coal:"#3b3b41", wind:"#cfe3ea", solar:"#28455f", park:"#6fc46f" };
+              ind:["#8a7a3a","#a8963f","#c7b148","#e0cc55"], coal:"#3b3b41", wind:"#cfe3ea", solar:"#28455f", park:"#6fc46f",
+              wtower:"#4a7d9e", sewage:"#5c6b52", police:"#26456e", fire:"#8a3a30",
+              hospital:"#b8c4c0", school:"#a08a3f", dump:"#4a3d2e", recycle:"#2e6b46" };
 
 function isRoad(x,y){ return x>=0&&y>=0&&x<N&&y<N&&S.g[y][x].t==="road"; }
 function draw(){
@@ -227,11 +283,25 @@ function draw(){
     if(c.t==="coal"){ cx2.fillStyle="#e06050"; cx2.fillRect(x*TS+TS*.25,y*TS+TS*.25,TS*.5,TS*.5); }
     if(c.t==="wind"){ cx2.strokeStyle="#4a90b8"; cx2.beginPath(); cx2.moveTo(x*TS+t2,y*TS+TS*.83); cx2.lineTo(x*TS+t2,y*TS+TS*.17); cx2.stroke(); }
     if(c.t==="solar"){ cx2.fillStyle="#4aa3d8"; cx2.fillRect(x*TS+TS*.17,y*TS+TS*.33,TS*.66,TS*.33); }
+    if(c.t==="wtower"){ cx2.strokeStyle="#eaf6ff"; cx2.beginPath(); cx2.arc(x*TS+t2,y*TS+t2,TS*.27,0,7); cx2.stroke(); }
+    if(c.t==="sewage"){ cx2.fillStyle="#8fa87a"; cx2.beginPath(); cx2.arc(x*TS+t2,y*TS+t2,TS*.22,0,7); cx2.fill(); }
+    if(c.t==="police"){ cx2.fillStyle="#dfe9ff"; cx2.fillRect(x*TS+t2-1,y*TS+TS*.25,2,TS*.5); }
+    if(c.t==="fire"){ cx2.fillStyle="#f0c040"; cx2.fillRect(x*TS+TS*.3,y*TS+TS*.3,TS*.4,TS*.4); }
+    if(c.t==="hospital"){ cx2.fillStyle="#c9402e"; cx2.fillRect(x*TS+t2-1,y*TS+TS*.2,2,TS*.6); cx2.fillRect(x*TS+TS*.2,y*TS+t2-1,TS*.6,2); }
+    if(c.t==="school"){ cx2.fillStyle="#fff3c4"; cx2.fillRect(x*TS+TS*.25,y*TS+TS*.4,TS*.5,2); cx2.fillRect(x*TS+TS*.25,y*TS+TS*.6,TS*.5,2); }
+    if(c.t==="dump"){ cx2.fillStyle="#2a2118"; cx2.fillRect(x*TS+TS*.25,y*TS+TS*.25,TS*.5,TS*.5); }
+    if(c.t==="recycle"){ cx2.fillStyle="#7fe3a8"; cx2.beginPath(); cx2.moveTo(x*TS+t2,y*TS+TS*.2); cx2.lineTo(x*TS+TS*.75,y*TS+TS*.7); cx2.lineTo(x*TS+TS*.25,y*TS+TS*.7); cx2.closePath(); cx2.fill(); }
     if(zone && c.lvl===0){                                              // lotto zonizzato ma non edificato
       cx2.strokeStyle=COL[c.t][3]; cx2.strokeRect(x*TS+1.5,y*TS+1.5,TS-3,TS-3);
     }
     if(zone && !lastPowered){                                           // indicatore "manca corrente"
       cx2.fillStyle="#e06050"; cx2.fillRect(x*TS+TS-4,y*TS+1,3,3);
+    }
+  }
+  if(RADII[tool]){                                                      // raggi di copertura del servizio selezionato
+    cx2.fillStyle="rgba(95,208,138,.10)"; cx2.strokeStyle="rgba(95,208,138,.55)";
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(S.g[y][x].t===tool){
+      cx2.beginPath(); cx2.arc(x*TS+t2,y*TS+t2,RADII[tool]*TS,0,7); cx2.fill(); cx2.stroke();
     }
   }
   if(planMode){                                                         // overlay del progetto (tratteggio)
@@ -347,7 +417,8 @@ cv.addEventListener("mousemove", ev=>{
   if(painting) place(x,y);
   if(x>=0&&y>=0&&x<N&&y<N){
     const c=S.g[y][x];
-    const nomi={grass:"Prato",water:"Acqua",tree:"Bosco",road:"Strada",res:"Residenziale",com:"Commerciale",ind:"Industriale",coal:"Centrale a carbone",wind:"Pala eolica",solar:"Impianto solare",park:"Parco"};
+    const nomi={grass:"Prato",water:"Acqua",tree:"Bosco",road:"Strada",res:"Zona Abitativa",com:"Zona Terziaria",ind:"Zona Manifatturiera",coal:"Centrale a carbone",wind:"Pala eolica",solar:"Impianto solare",park:"Parco",
+                wtower:"Torre idrica",sewage:"Depuratore",police:"Polizia",fire:"Pompieri",hospital:"Ospedale",school:"Scuola",dump:"Discarica",recycle:"Centro riciclo"};
     const e = ECO[c.t] ?? 0;
     const eco = ` — Eco ${e>0?"+":""}${e} ${e<=-3?"🔴":e<0?"🟠":e===0?"⚪":e<3?"🟢":"💚"}`;
     document.getElementById("tileinfo").textContent = `(${x},${y}) ${nomi[c.t]||c.t}${c.lvl?` — liv. ${c.lvl}`:""}${eco}`;
@@ -367,15 +438,29 @@ function nearRoad(x,y,d=3){
   return false;
 }
 function counts(){
-  const c={res:0,com:0,ind:0,road:0,coal:0,wind:0,solar:0,park:0,tree:0,resL:0,comL:0,indL:0};
+  const c={res:0,com:0,ind:0,road:0,coal:0,wind:0,solar:0,park:0,tree:0,resL:0,comL:0,indL:0,
+           wtower:0,sewage:0,police:0,fire:0,hospital:0,school:0,dump:0,recycle:0,
+           pos:{wtower:[],police:[],fire:[],hospital:[],school:[]}, zdev:[]};
   for(let y=0;y<N;y++) for(let x=0;x<N;x++){
     const t=S.g[y][x];
     if(c[t.t]!==undefined) c[t.t]++;
     if(t.t==="res") c.resL+=t.lvl;
     if(t.t==="com") c.comL+=t.lvl;
     if(t.t==="ind") c.indL+=t.lvl;
+    if(c.pos[t.t]) c.pos[t.t].push([x,y]);
+    if((t.t==="res"||t.t==="com"||t.t==="ind") && t.lvl>0) c.zdev.push([x,y]);
   }
   return c;
+}
+function nearAny(list,x,y,r){
+  const r2=r*r;
+  for(const [px,py] of list){ if((px-x)**2+(py-y)**2<=r2) return true; }
+  return false;
+}
+function coveragePct(list, zdev, r){
+  if(!zdev.length) return 0;
+  let n=0; for(const [x,y] of zdev) if(nearAny(list,x,y,r)) n++;
+  return n/zdev.length*100;
 }
 function tick(){
   const c = counts();
@@ -390,16 +475,21 @@ function tick(){
   S.demC = Math.max(-1, Math.min(1, (S.pop*.30 - c.comL*6)/80));
   S.demI = Math.max(-1, Math.min(1, (S.pop*.55 - c.indL*9)/100 + .15));
   // crescita/decadenza zone (scansione completa delle zone)
+  const f2 = S.diff >= 2;                                    // sistemi Fase 2 attivi da "Facile" in su
   for(let y=0;y<N;y++) for(let x=0;x<N;x++){
     const t=S.g[y][x];
     if(t.t!=="res"&&t.t!=="com"&&t.t!=="ind") continue;
     const d = t.t==="res"?S.demR : t.t==="com"?S.demC : S.demI;
-    if(powered && d>0 && Math.random()<d*.45*(1 - S.tax/40) && nearRoad(x,y)){ if(t.lvl<3) t.lvl++; }
+    // con Fase 2: oltre il livello 1 serve anche l'acqua (torre idrica entro raggio)
+    const waterOK = !f2 || t.lvl<1 || nearAny(c.pos.wtower, x, y, RADII.wtower);
+    if(powered && waterOK && d>0 && Math.random()<d*.45*(1 - S.tax/40) && nearRoad(x,y)){ if(t.lvl<3) t.lvl++; }
     else if((!powered || d<-.3) && Math.random()<.2){ if(t.lvl>0) t.lvl--; }
   }
-  // bilancio mensile
+  // bilancio mensile (manutenzioni scalate per difficoltà)
   const entrate = (S.pop*.9 + c.comL*4 + c.indL*5) * S.tax/10;
-  const uscite  = c.road*MAINT.road + c.coal*MAINT.coal + c.wind*MAINT.wind + c.solar*MAINT.solar + c.park*MAINT.park;
+  let uscite = 0;
+  for(const k in MAINT) if(c[k]) uscite += c[k]*MAINT[k];
+  uscite *= DIFF[S.diff].mult;
   S.funds += Math.round(entrate - uscite);
   // ESG — punteggi -1..+5
   const popX = Math.max(S.pop,150);                                 // floor anti-inflazione per città piccole
@@ -410,10 +500,34 @@ function tick(){
   S.esg.F = clampScore(lerpScore(renew, 20, 40, 60));
   const co2 = (c.coal*95 + c.indL*6) / popX * 10;                    // tCO2e pro capite (stilizzato)
   S.esg.G = clampScore(lerpScore(-co2, -6, -4, -2));                 // meno CO2 = più punti
+  // ---- sistemi Fase 2 (difficoltà ≥ Facile) ----
+  let extraHappy = 0;
+  if(f2){
+    // C — rifiuti/circolarità: capacità e quota riciclo
+    const dumpCap = c.dump*1500, recyCap = c.recycle*1000, wasteCap = dumpCap + recyCap;
+    const recShare = wasteCap>0 ? recyCap/wasteCap*100 : 0;
+    S.esg.C = clampScore(lerpScore(recShare, 65, 75, 85));
+    if(S.pop > wasteCap){ extraHappy -= 8; if(Math.random()<.2) pushNews("🗑 Rifiuti non gestiti: servono discariche o centri riciclo!"); }
+    // D — mobilità/traffico: carico medio per tile stradale
+    const zl = c.resL + c.comL + c.indL;
+    const traffic = zl>0 ? zl*2/Math.max(c.road,1) : 0;
+    S.esg.D = zl>0 ? clampScore(lerpScore(-traffic, -4, -2.5, -1.5)) : 0;
+    if(traffic>4 && Math.random()<.15) pushNews("🚗 Traffico congestionato: servono più strade o quartieri compatti.");
+    // E — servizi/vivibilità: copertura media dei 4 servizi sulle zone sviluppate
+    const covs = ["police","fire","hospital","school"].map(s=>coveragePct(c.pos[s], c.zdev, RADII[s]));
+    const avgCov = covs.reduce((a,b)=>a+b,0)/4;
+    S.esg.E = c.zdev.length ? clampScore(lerpScore(avgCov, 50, 75, 90)) : 0;
+    // depuratore: prerequisito oltre 800 abitanti (SCE F-01)
+    if(S.pop>800 && c.sewage===0){
+      S.esg.F = Math.min(S.esg.F, 1); extraHappy -= 6;
+      if(Math.random()<.15) pushNews("🌀 Acque reflue non trattate: costruisci un depuratore!");
+    }
+    extraHappy += S.esg.E*1.5 + S.esg.C*0.8 + S.esg.D*0.8;
+  }
   // felicità
   const unemp = Math.max(0, (S.pop - S.jobs)/Math.max(S.pop,1));
   S.happy = Math.round(Math.max(5, Math.min(98,
-    55 + S.esg.A*4 + S.esg.G*3 - unemp*35 - (S.tax-7)*2 + (powered?0:-18))));
+    55 + S.esg.A*4 + S.esg.G*3 + extraHappy - unemp*35 - (S.tax-7)*2 + (powered?0:-18))));
   // eventi/news
   if(!powered && Math.random()<.5) pushNews("⚡ Blackout! Serve più capacità elettrica.");
   if(co2>6 && Math.random()<.15) pushNews("🏭 Il Gazzettino: «Smog alle stelle, cittadini esasperati»");
@@ -431,7 +545,8 @@ function lerpScore(v, s0, s3, s5){       // benchmark 0 / 3 / 5 con interpolazio
 }
 function clampScore(v){ return Math.round(Math.max(-1,Math.min(5,v))*10)/10; }
 function badgeName(){
-  const m=(S.esg.A+S.esg.F+S.esg.G)/3;
+  const keys = S.diff>=2 ? ["A","C","D","E","F","G"] : ["A","F","G"];  // aree attive per difficoltà
+  const m = keys.reduce((s,k)=>s+(S.esg[k]||0),0)/keys.length;
   if(m>=3.5 && S.esg.A>=4 && S.esg.G>=4) return "🏆 PLATINO";
   if(m>=2.5) return "🥇 ORO";
   if(m>=1.5) return "🥈 ARGENTO";
@@ -461,8 +576,7 @@ function refreshHUD(){
   p.className = "stat " + (ratio>=0.9 ? "pw-red" : ratio>=0.75 ? "pw-orange" : "pw-green");
   setBar("dR",S.demR); setBar("dC",S.demC); setBar("dI",S.demI);
   setESG("A",S.esg.A); setESG("F",S.esg.F); setESG("G",S.esg.G);
-  document.getElementById("vD").textContent="Fase 2";
-  document.getElementById("bD").style.width="0%";
+  if(S.diff>=2){ setESG("C",S.esg.C||0); setESG("D",S.esg.D||0); setESG("E",S.esg.E||0); }
   document.getElementById("badge").textContent = "Livello: " + badgeName();
   document.getElementById("bH").style.width = S.happy+"%";
   document.getElementById("vH").textContent = S.happy+"%";
@@ -499,7 +613,13 @@ document.getElementById("btn-save").onclick = ()=>{
   toast(planMode ? "💾 Città salvata (bozze di progetto escluse)" : "💾 Città salvata");
   pushNews("💾 Città salvata.");
 };
-document.getElementById("btn-new").onclick = ()=>{ if(planMode) cancelPlan(); if(confirm("Nuova città? Il salvataggio attuale resta finché non salvi di nuovo.")){ S=newCity(); draw(); refreshHUD(); } };
+document.getElementById("btn-new").onclick = ()=>{
+  if(planMode) cancelPlan();
+  if(confirm("Nuova città? Il salvataggio attuale resta finché non salvi di nuovo.")){
+    setSpeed(0); firstStart = true;
+    document.getElementById("diffsel").style.display="flex";   // si sceglie di nuovo la difficoltà
+  }
+};
 document.getElementById("btn-load").onclick = ()=>{
   const sv = localStorage.getItem("ecocity_esg");
   if(!sv){ pushNews("⚠ Nessuna città salvata da caricare."); return; }
@@ -510,7 +630,10 @@ document.getElementById("btn-load").onclick = ()=>{
     document.getElementById("btn-plan").classList.remove("on");
   }
   S = JSON.parse(sv);
+  if(!S.diff) S.diff = 1;                                       // salvataggi vecchi: Principiante
+  S.esg = Object.assign({A:0,C:0,D:0,E:0,F:0,G:0}, S.esg);
   document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
+  applyDiffUI();
   setSpeed(0); draw(); refreshHUD();
   enterPlan();
   toast("📂 Città caricata");
@@ -519,12 +642,20 @@ document.getElementById("btn-load").onclick = ()=>{
 document.getElementById("btn-help").onclick = ()=>{ document.getElementById("help").style.display="flex"; };
 document.getElementById("btn-start").onclick = ()=>{
   document.getElementById("help").style.display="none";
-  if(firstStart){
-    firstStart = false;
-    enterPlan();                  // la progettazione compare solo ORA
-    pushNews("📐 Progetta la tua città, poi APPLICA e premi ▶ per avviare il tempo.");
-  }
+  if(firstStart) document.getElementById("diffsel").style.display="flex";   // prima la scelta difficoltà
 };
+[1,2,3,4].forEach(d=>{
+  document.getElementById("diff"+d).onclick = ()=>{
+    document.getElementById("diffsel").style.display="none";
+    if(!firstStart) return;
+    firstStart = false;
+    S = newCity(d);               // città generata con fondi/regole del livello scelto (immutabile)
+    document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
+    applyDiffUI(); draw(); refreshHUD();
+    enterPlan();                  // la progettazione compare solo ORA
+    pushNews(`📐 Livello ${DIFF[d].nome}: progetta la città, APPLICA e premi ▶.`);
+  };
+});
 document.getElementById("zi").onclick = ()=>setZoom(1);
 document.getElementById("zo").onclick = ()=>setZoom(-1);
 // menù di sistema ☰
@@ -547,7 +678,15 @@ function hintFor(k){
   const co2 = Math.round((c.coal*95 + c.indL*6)/popX*100)/10;
   switch(k){
     case "A": return `<b>Area A — Verde urbano</b><br>Verde fruibile: ${greenPC} m²/ab (buono ≥15, eccellente ≥25).<br>• Pianta 🌳 parchi vicino alle case<br>• Aggiungi 🌲 alberi per la chioma urbana<br>• Non demolire il verde esistente`;
-    case "D": return `<b>Area D — Mobilità</b><br>Area completa nella Fase 2.<br>• Intanto progetta quartieri compatti: case vicine a negozi e lavoro<br>• Lascia spazio per ciclabili e trasporto pubblico`;
+    case "C": {
+      const wc = c.dump*1500 + c.recycle*1000;
+      return `<b>Area C — Rifiuti/Circolarità</b><br>Capacità: ${wc.toLocaleString("it-IT")} ab (pop. ${S.pop.toLocaleString("it-IT")}).<br>• Il ♻ centro riciclo alza la quota di differenziata (obiettivo ≥75%)<br>• La 🗑 discarica è economica ma inquina (Eco −4)<br>• Se la capacità è insufficiente la felicità crolla`;
+    }
+    case "D": return `<b>Area D — Mobilità/Traffico</b><br>Il traffico dipende dal rapporto tra zone sviluppate e strade.<br>• Aggiungi strade per decongestionare<br>• Quartieri compatti = meno spostamenti<br>• Nelle prossime versioni: ciclabili e trasporto pubblico`;
+    case "E": {
+      const cov = ["police","fire","hospital","school"].map(s=>Math.round(coveragePct(c.pos[s], c.zdev, RADII[s])));
+      return `<b>Area E — Servizi/Vivibilità</b><br>Copertura: 🚓${cov[0]}% 🚒${cov[1]}% 🏥${cov[2]}% 🏫${cov[3]}% (obiettivo ≥75%).<br>• Seleziona un servizio per vederne i raggi sulla mappa<br>• Meglio tanti presidi piccoli DISTRIBUITI che uno solo centrale`;
+    }
     case "F": return `<b>Area F — Energia pulita</b><br>Rinnovabili: ${renew}% della capacità (buono ≥40%, eccellente ≥60%).<br>• Costruisci 🌬 eolico e ☀ solare<br>• Demolisci il carbone quando la capacità lo consente<br>• Evita il blackout: capacità ≥ domanda`;
     case "G": return `<b>Area G — Clima/CO₂</b><br>Emissioni: ~${co2} t/ab (buono ≤4, eccellente ≤2).<br>• Riduci carbone e industria pesante<br>• Parchi e alberi assorbono CO₂ e calore<br>• Per il Platino servono A e G ≥ 4`;
     case "H": {
@@ -602,6 +741,9 @@ document.getElementById("btn-apply").onclick = applyPlan;
 // ============ AVVIO ============
 const saved = localStorage.getItem("ecocity_esg");
 S = saved ? JSON.parse(saved) : newCity();
+if(!S.diff) S.diff = 1;
+S.esg = Object.assign({A:0,C:0,D:0,E:0,F:0,G:0}, S.esg);
+applyDiffUI();
 if(saved) document.getElementById("help").style.display="none";
 document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
 draw(); refreshHUD();
