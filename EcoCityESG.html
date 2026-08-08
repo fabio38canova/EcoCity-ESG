@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>EcoCity ESG — Fase 1 (MVP)</title>
+<!-- Client Supabase (autenticazione): vedi istruzioni di configurazione nel blocco CONFIG dello script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root { --bg:#1a2420; --panel:#243430; --line:#3a4f45; --txt:#e8f0ea; --dim:#9ab5a5; --acc:#5fd08a; --warn:#e8b84b; --bad:#e06050; }
   * { box-sizing:border-box; margin:0; }
@@ -72,14 +74,98 @@
   .row button { flex:1; background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:5px; cursor:pointer; }
   label.tx { font-size:12px; color:var(--dim); display:block; margin-top:8px; }
   input[type=range] { width:100%; }
-  #help { position:absolute; inset:0; background:rgba(10,16,13,.92); z-index:10; display:flex; align-items:center; justify-content:center; }
+  #help { position:absolute; inset:0; background:rgba(10,16,13,.92); z-index:10; display:none; align-items:center; justify-content:center; }
   #help .card { max-width:560px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; line-height:1.55; }
   #help h2 { color:var(--acc); margin-bottom:8px; }
   #help ol { padding-left:20px; margin:8px 0; }
   #help button { margin-top:10px; background:var(--acc); border:none; color:#10201a; font-weight:700; padding:8px 18px; border-radius:8px; cursor:pointer; }
+  /* ---- cancello di accesso (login/registrazione/2FA) ---- */
+  #authgate { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; align-items:center; justify-content:center; }
+  #authgate .card { width:100%; max-width:400px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px; }
+  #authgate h1 { color:var(--acc); font-size:20px; margin-bottom:2px; }
+  #authgate .sub { color:var(--dim); font-size:12.5px; margin-bottom:16px; }
+  #authgate .tabs { display:flex; gap:6px; margin-bottom:14px; }
+  #authgate .tabs button { flex:1; background:#1c2a25; color:var(--dim); border:1px solid var(--line); border-radius:8px; padding:8px; cursor:pointer; font-size:13px; }
+  #authgate .tabs button.on { background:var(--acc); color:#10201a; font-weight:700; border-color:var(--acc); }
+  #authgate label { display:block; font-size:12px; color:var(--dim); margin:10px 0 4px; }
+  #authgate input { width:100%; background:#141f1a; border:1px solid var(--line); color:var(--txt); border-radius:8px; padding:9px 10px; font-size:14px; }
+  #authgate input:focus { outline:1px solid var(--acc); }
+  #authgate .primary { width:100%; margin-top:16px; background:var(--acc); border:none; color:#10201a; font-weight:700; padding:10px; border-radius:8px; cursor:pointer; font-size:14px; }
+  #authgate .primary:disabled { opacity:.5; cursor:default; }
+  #authgate .msg { font-size:12.5px; margin-top:12px; line-height:1.5; padding:8px 10px; border-radius:8px; display:none; }
+  #authgate .msg.err { display:block; background:rgba(224,96,80,.15); color:#ff9585; border:1px solid rgba(224,96,80,.4); }
+  #authgate .msg.ok { display:block; background:rgba(95,208,138,.12); color:var(--acc); border:1px solid rgba(95,208,138,.4); }
+  #authgate .pane { display:none; }
+  #authgate .pane.on { display:block; }
+  #authgate .qr { text-align:center; margin:12px 0; }
+  #authgate .qr img { width:170px; height:170px; background:#fff; border-radius:8px; padding:6px; }
+  #authgate .secret { font-family:monospace; font-size:12px; color:var(--dim); word-break:break-all; text-align:center; margin-top:6px; }
+  #authgate .link { background:none; border:none; color:var(--dim); font-size:12px; text-decoration:underline; cursor:pointer; margin-top:10px; display:block; text-align:center; }
+  #authgate .cfg-warn { font-size:12px; color:var(--warn); line-height:1.5; }
 </style>
 </head>
 <body>
+<div id="authgate">
+  <div class="card">
+    <h1>🌿 EcoCity ESG</h1>
+    <div class="sub">Accesso riservato ai tester dell'alpha.</div>
+
+    <div id="ag-config" style="display:none">
+      <p class="cfg-warn">⚠ Configurazione mancante: apri il file, cerca "CONFIG SUPABASE" nello script e inserisci SUPABASE_URL e SUPABASE_ANON_KEY del tuo progetto. Vedi le istruzioni di pubblicazione.</p>
+    </div>
+
+    <div id="ag-auth">
+      <div class="tabs">
+        <button id="ag-tab-login" class="on">Accedi</button>
+        <button id="ag-tab-reg">Registrati</button>
+      </div>
+
+      <div id="ag-pane-login" class="pane on">
+        <label>Email</label>
+        <input type="email" id="ag-login-email" autocomplete="email">
+        <label>Password</label>
+        <input type="password" id="ag-login-pass" autocomplete="current-password">
+        <button class="primary" id="ag-btn-login">Accedi</button>
+      </div>
+
+      <div id="ag-pane-reg" class="pane">
+        <label>Email</label>
+        <input type="email" id="ag-reg-email" autocomplete="email">
+        <label>Password (minimo 6 caratteri)</label>
+        <input type="password" id="ag-reg-pass" autocomplete="new-password">
+        <label>Conferma password</label>
+        <input type="password" id="ag-reg-pass2" autocomplete="new-password">
+        <button class="primary" id="ag-btn-reg">Crea account</button>
+      </div>
+
+      <div id="ag-msg" class="msg"></div>
+    </div>
+
+    <div id="ag-mfa-choice" class="pane">
+      <p style="font-size:13.5px;line-height:1.5;">Accesso riuscito. Vuoi attivare la <b>verifica in due passaggi</b> (consigliata) con un'app authenticator (Google Authenticator, Authy, ecc.)?</p>
+      <button class="primary" id="ag-btn-enroll">🔒 Attiva ora (consigliato)</button>
+      <button class="link" id="ag-btn-skip2fa">Più tardi</button>
+    </div>
+
+    <div id="ag-mfa-enroll" class="pane">
+      <p style="font-size:13px;color:var(--dim)">Inquadra il codice QR con la tua app authenticator, poi inserisci il codice a 6 cifre generato.</p>
+      <div class="qr"><img id="ag-qr-img" alt="QR 2FA"></div>
+      <div class="secret" id="ag-qr-secret"></div>
+      <label>Codice a 6 cifre</label>
+      <input type="text" id="ag-enroll-code" inputmode="numeric" maxlength="6" placeholder="000000">
+      <button class="primary" id="ag-btn-confirm-enroll">Conferma e attiva</button>
+      <div id="ag-mfa-msg" class="msg"></div>
+    </div>
+
+    <div id="ag-mfa-challenge" class="pane">
+      <p style="font-size:13.5px;">Inserisci il codice a 6 cifre della tua app authenticator.</p>
+      <label>Codice a 6 cifre</label>
+      <input type="text" id="ag-challenge-code" inputmode="numeric" maxlength="6" placeholder="000000">
+      <button class="primary" id="ag-btn-challenge">Verifica</button>
+      <div id="ag-challenge-msg" class="msg"></div>
+    </div>
+  </div>
+</div>
 <header>
   <span class="logo">🌿 EcoCity ESG</span>
   <span class="syswrap" style="position:relative;">
@@ -89,6 +175,7 @@
       <button id="btn-load">📂 Carica città</button>
       <button id="btn-new">🆕 Nuova città</button>
       <button id="btn-help">❓ Aiuto</button>
+      <button id="btn-logout">🚪 Esci</button>
     </div>
   </span>
   <span class="stat" id="s-date">Gen 2026</span>
@@ -196,6 +283,16 @@
 
 <script>
 "use strict";
+// ============ CONFIG SUPABASE ============
+// 1. Crea un progetto su https://supabase.com (gratuito)
+// 2. Project Settings -> API: copia "Project URL" e "anon public key" qui sotto
+// 3. Vedi le istruzioni complete fornite a parte per email di conferma e Site URL
+const SUPABASE_URL = "INCOLLA_QUI_LA_TUA_PROJECT_URL";
+const SUPABASE_ANON_KEY = "INCOLLA_QUI_LA_TUA_ANON_KEY";
+const sb = (SUPABASE_URL.startsWith("http") && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
 // ============ COSTANTI ============
 const N = 64; let TS = 12;                   // griglia e dimensione tile (variabile per lo zoom)
 const ZOOMS = [8, 10, 12, 16, 22];           // livelli di zoom disponibili
@@ -738,22 +835,145 @@ document.getElementById("btn-undo").onclick = undoPlan;
 document.getElementById("btn-cancel").onclick = cancelPlan;
 document.getElementById("btn-apply").onclick = applyPlan;
 
-// ============ AVVIO ============
-const saved = localStorage.getItem("ecocity_esg");
-S = saved ? JSON.parse(saved) : newCity();
-if(!S.diff) S.diff = 1;
-S.esg = Object.assign({A:0,C:0,D:0,E:0,F:0,G:0}, S.esg);
-applyDiffUI();
-if(saved) document.getElementById("help").style.display="none";
-document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
-draw(); refreshHUD();
-setSpeed(0);                      // il gioco inizia sempre IN PAUSA
-firstStart = !saved;
-if(saved){                        // partita caricata: niente guida, progettazione subito
-  enterPlan();
-  pushNews("📐 Rivedi la città in progettazione, poi APPLICA e premi ▶ per avviare il tempo.");
+// ============ AVVIO DEL GIOCO (chiamato solo dopo login riuscito) ============
+function initGame(){
+  const saved = localStorage.getItem("ecocity_esg");
+  S = saved ? JSON.parse(saved) : newCity();
+  if(!S.diff) S.diff = 1;
+  S.esg = Object.assign({A:0,C:0,D:0,E:0,F:0,G:0}, S.esg);
+  applyDiffUI();
+  document.getElementById("help").style.display = saved ? "none" : "flex";
+  document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
+  draw(); refreshHUD();
+  setSpeed(0);                      // il gioco inizia sempre IN PAUSA
+  firstStart = !saved;
+  if(saved){                        // partita caricata: niente guida, progettazione subito
+    enterPlan();
+    pushNews("📐 Rivedi la città in progettazione, poi APPLICA e premi ▶ per avviare il tempo.");
+  }
+  // per una nuova città la progettazione parte SOLO premendo "Inizia a governare" (guida in primo piano)
 }
-// per una nuova città la progettazione parte SOLO premendo "Inizia a governare" (guida in primo piano)
+
+// ============ AUTENTICAZIONE (Supabase: email+password, verifica email, 2FA TOTP) ============
+let ag_pendingFactorId = null;   // fattore MFA in fase di enroll
+function agShowMsg(id, text, ok){
+  const e = document.getElementById(id);
+  e.textContent = text; e.className = "msg " + (ok ? "ok" : "err");
+}
+function agShowPane(id){
+  ["ag-auth","ag-mfa-choice","ag-mfa-enroll","ag-mfa-challenge"].forEach(p=>{
+    document.getElementById(p).classList.toggle("on", p===id);
+  });
+}
+function agUnlock(){
+  document.getElementById("authgate").style.display = "none";
+  initGame();
+}
+async function agAfterLogin(){
+  // AAL2 richiesto? (l'utente ha già un fattore 2FA verificato -> va sfidato)
+  const { data, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(error){ agShowMsg("ag-msg", "Errore di sessione: " + error.message); return; }
+  if(data.nextLevel === "aal2" && data.currentLevel !== "aal2"){
+    const { data: factors } = await sb.auth.mfa.listFactors();
+    const factor = factors.totp.find(f=>f.status==="verified");
+    if(factor){
+      ag_pendingFactorId = factor.id;
+      agShowPane("ag-mfa-challenge");
+      return;
+    }
+  }
+  if(data.nextLevel === "aal1" || data.currentLevel === "aal2"){
+    // nessun fattore verificato: propone (non obbliga) l'attivazione della 2FA
+    const { data: factors } = await sb.auth.mfa.listFactors();
+    if(!factors || !factors.totp.some(f=>f.status==="verified")){
+      agShowPane("ag-mfa-choice");
+      return;
+    }
+  }
+  agUnlock();
+}
+async function agInit(){
+  if(!sb){ document.getElementById("ag-config").style.display="block"; document.getElementById("ag-auth").style.display="none"; return; }
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) await agAfterLogin();
+}
+// ---- tab login/registrazione ----
+document.getElementById("ag-tab-login").onclick = ()=>{
+  document.getElementById("ag-tab-login").classList.add("on");
+  document.getElementById("ag-tab-reg").classList.remove("on");
+  document.getElementById("ag-pane-login").classList.add("on");
+  document.getElementById("ag-pane-reg").classList.remove("on");
+};
+document.getElementById("ag-tab-reg").onclick = ()=>{
+  document.getElementById("ag-tab-reg").classList.add("on");
+  document.getElementById("ag-tab-login").classList.remove("on");
+  document.getElementById("ag-pane-reg").classList.add("on");
+  document.getElementById("ag-pane-login").classList.remove("on");
+};
+// ---- login ----
+document.getElementById("ag-btn-login").onclick = async ()=>{
+  if(!sb) return;
+  const email = document.getElementById("ag-login-email").value.trim();
+  const pass  = document.getElementById("ag-login-pass").value;
+  if(!email || !pass){ agShowMsg("ag-msg","Inserisci email e password."); return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error){
+    const msg = /confirm/i.test(error.message) ? "Email non confermata: controlla la posta e clicca il link di conferma."
+              : /invalid/i.test(error.message) ? "Credenziali non valide."
+              : error.message;
+    agShowMsg("ag-msg", msg); return;
+  }
+  agShowMsg("ag-msg","",true); await agAfterLogin();
+};
+// ---- registrazione ----
+document.getElementById("ag-btn-reg").onclick = async ()=>{
+  if(!sb) return;
+  const email = document.getElementById("ag-reg-email").value.trim();
+  const pass  = document.getElementById("ag-reg-pass").value;
+  const pass2 = document.getElementById("ag-reg-pass2").value;
+  if(!email || pass.length<6){ agShowMsg("ag-msg","Email valida e password di almeno 6 caratteri."); return; }
+  if(pass !== pass2){ agShowMsg("ag-msg","Le due password non coincidono."); return; }
+  const { error } = await sb.auth.signUp({ email, password: pass });
+  if(error){ agShowMsg("ag-msg", error.message); return; }
+  agShowMsg("ag-msg","Account creato! Controlla la tua email e clicca il link di conferma prima di accedere.", true);
+};
+// ---- scelta 2FA post-login ----
+document.getElementById("ag-btn-skip2fa").onclick = ()=> agUnlock();
+document.getElementById("ag-btn-enroll").onclick = async ()=>{
+  const { data, error } = await sb.auth.mfa.enroll({ factorType:"totp" });
+  if(error){ agShowMsg("ag-msg", error.message); agShowPane("ag-auth"); return; }
+  ag_pendingFactorId = data.id;
+  document.getElementById("ag-qr-img").src = data.totp.qr_code;      // Supabase fornisce già l'SVG del QR
+  document.getElementById("ag-qr-secret").textContent = "Codice manuale: " + data.totp.secret;
+  agShowPane("ag-mfa-enroll");
+};
+document.getElementById("ag-btn-confirm-enroll").onclick = async ()=>{
+  const code = document.getElementById("ag-enroll-code").value.trim();
+  if(code.length!==6){ agShowMsg("ag-mfa-msg","Inserisci il codice a 6 cifre."); return; }
+  const { data: ch, error: e1 } = await sb.auth.mfa.challenge({ factorId: ag_pendingFactorId });
+  if(e1){ agShowMsg("ag-mfa-msg", e1.message); return; }
+  const { error: e2 } = await sb.auth.mfa.verify({ factorId: ag_pendingFactorId, challengeId: ch.id, code });
+  if(e2){ agShowMsg("ag-mfa-msg", "Codice errato, riprova."); return; }
+  agUnlock();
+};
+// ---- verifica 2FA a login successivi ----
+document.getElementById("ag-btn-challenge").onclick = async ()=>{
+  const code = document.getElementById("ag-challenge-code").value.trim();
+  if(code.length!==6){ agShowMsg("ag-challenge-msg","Inserisci il codice a 6 cifre."); return; }
+  const { data: ch, error: e1 } = await sb.auth.mfa.challenge({ factorId: ag_pendingFactorId });
+  if(e1){ agShowMsg("ag-challenge-msg", e1.message); return; }
+  const { error: e2 } = await sb.auth.mfa.verify({ factorId: ag_pendingFactorId, challengeId: ch.id, code });
+  if(e2){ agShowMsg("ag-challenge-msg", "Codice errato, riprova."); return; }
+  agUnlock();
+};
+// ---- logout ----
+document.getElementById("btn-logout").onclick = async ()=>{
+  if(!confirm("Uscire? Ricordati di salvare la città prima di uscire.")) return;
+  if(sb) await sb.auth.signOut();
+  location.reload();
+};
+
+agInit();   // avvia il controllo di sessione; se già loggato, entra direttamente nel gioco
 </script>
 </body>
 </html>
