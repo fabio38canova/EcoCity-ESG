@@ -1,8 +1,10 @@
 ================================================================================
-PROMPT PER BASE44 — PROGETTO "SIMCITY ESG"
+PROMPT PER CLAUDE CODE — PROGETTO "SIMCITY ESG"
 Gioco manageriale di costruzione e gestione urbana in stile SimCity 2000,
 basato su logiche ESG (Environmental, Social, Governance)
-Da incollare come primo prompt su app.base44.com con modalità PLAN attivata.
+Specifica funzionale per lo sviluppo con CLAUDE CODE: progetto nella cartella
+locale D:\SimCityESG, app single-file HTML/JS, versionata con Git
+(+0.1 a ogni modifica, +1.0 al completamento di ogni livello di sviluppo).
 ================================================================================
 
 Voglio costruire una web app di gioco chiamata "SimCity ESG": un city-builder
@@ -36,10 +38,13 @@ Mappa e costruzione:
   canvas 2D. Niente 3D: deve girare fluida nel browser.
 - Terreno con: pianura, colline, acqua (fiume/lago), alberi. Strumenti
   terreno: spianare, piantare/tagliare alberi, acqua.
-- Zonizzazione RCI: zone Residenziali, Commerciali, Industriali, ciascuna a
+- Zonizzazione ATM: zone Abitative, Terziario, Manifatturiera, ciascuna a
   densità bassa/alta. Le zone si sviluppano da sole nel tempo se hanno:
-  energia, acqua, accesso stradale e domanda (indicatore di domanda RCI
-  visibile come in SC2000).
+  energia, acqua, accesso stradale e domanda (indicatore di domanda ATM
+  visibile, equivalente all'RCI di SC2000: A=Abitativo→R, T=Terziario→C,
+  M=Manifatturiero→I). Le zone appena tracciate appaiono come LOTTI LIBERI
+  (bordo colorato) finché non si sviluppano; senza centrale elettrica non si
+  sviluppano mai (puntino rosso "manca corrente").
 - Reti: strade, ferrovia/metro leggera, linee elettriche, tubazioni acqua.
 - Edifici di servizio piazzabili: municipio, stazioni di polizia, caserme dei
   pompieri, ospedali, scuole, università, biblioteche, parchi, stadi,
@@ -48,9 +53,22 @@ Mappa e costruzione:
   50 anni (poi vanno sostituite, come in SC2000): carbone, gas, petrolio,
   nucleare, idroelettrica, EOLICA, SOLARE. Le fonti rinnovabili costano di
   più per MW ma hanno inquinamento zero e migliorano il punteggio ESG.
-- Tempo di gioco: simulazione con velocità pausa/1x/2x/4x; un "anno" di gioco
-  = ciclo di bilancio. Ogni gennaio si apre la finestra Bilancio.
-- Bilancio: entrate (tasse su R/C/I regolabili 0–20%, ordinanze con gettito),
+- Tempo di gioco: simulazione con velocità pausa/1x/2x/4x, dove 1x = 24
+  secondi per mese, 2x = 12 s, 4x = 6 s; un "anno" di gioco = ciclo di
+  bilancio. Ogni gennaio si apre la finestra Bilancio.
+- AVVIO: il gioco parte sempre IN PAUSA. Per una nuova città compare prima la
+  guida rapida; premuto "Inizia a governare" si sceglie il livello di
+  difficoltà e si entra in modalità progettazione. Il tempo parte solo quando
+  il giocatore preme ▶ dopo aver applicato il primo progetto.
+- MODALITÀ PROGETTAZIONE: attivabile col pulsante 📐, apre una finestra
+  flottante trascinabile. Le opere si tracciano in bozza (tratteggio) senza
+  addebito, con PREVENTIVO e disponibilità sempre visibili. Pulsanti: UNDO
+  (annulla l'ultima azione), ANNULLA (ripristina la mappa pre-progettazione),
+  APPLICA (realizza tutto e addebita il totale). Se PREVENTIVO >=
+  DISPONIBILITÀ: avviso "budget sforato" e blocco di ulteriori tracciamenti.
+  In progettazione la simulazione è in pausa; il salvataggio salva la città
+  reale escludendo le bozze.
+- Bilancio: entrate (tasse su A/T/M regolabili 0–20%, ordinanze con gettito),
   uscite (manutenzione strade/reti, servizi, quote ordinanze), possibilità di
   emettere obbligazioni (prestiti con interessi).
 - Ordinanze attivabili/disattivabili (con costo o gettito annuo), tra cui:
@@ -111,7 +129,7 @@ KPI: % popolazione entro raggio di servizio di polizia/pompieri/ospedale/
 scuola (la copertura DECENTRATA è premiata: tanti presidi piccoli distribuiti
 battono un mega-centro unico); % spazi accessibili; mix funzionale del
 quartiere. Meccaniche: raggio di copertura visibile per ogni servizio;
-quartieri con mix R+C+servizi hanno bonus vivibilità ("città dei 15 minuti").
+quartieri con mix A+T+servizi hanno bonus vivibilità ("città dei 15 minuti").
 
 AREA F — METABOLISMO URBANO: ACQUA, ENERGIA, SPRECHI (peso 12%)
 KPI: perdite rete idrica % (40/25/15 – le tubazioni invecchiano e vanno
@@ -149,8 +167,25 @@ crescono; città inquinate e corrotte si spopolano anche se ricche.
 --------------------------------------------------------------------------------
 - Schermata principale: canvas mappa al centro; toolbar sinistra con gruppi
   strumenti (Terreno, Zone, Reti, Energia, Acqua, Servizi, Verde, Rifiuti,
-  Demolisci) in stile SC2000; barra superiore con: nome città, data di gioco,
-  fondi, popolazione, velocità simulazione (pausa/1x/2x/4x).
+  Demolisci) in stile SC2000; barra superiore con, nell'ordine: logo, menù di
+  sistema ☰ (voci: Salva città, Carica città, Nuova città, Aiuto — ogni
+  azione dà riscontro con un toast di conferma al centro dello schermo), data
+  di gioco, fondi, popolazione, indicatore energia, velocità (pausa/1x/2x/4x),
+  zoom 🔍+/−.
+- Indicatore energia ⚡ "assorbita/installata MW" con colore a soglie: verde
+  se il carico è <75% della capacità installata, arancione tra 75% e 89%,
+  rosso da 90% in su.
+- Navigazione mappa: zoom in/out a più livelli che mantiene centrata l'area
+  visualizzata; barre di scorrimento orizzontale e verticale ben visibili;
+  pan con il tasto centrale del mouse.
+- Grafica strade orientata: segnaletica orizzontale, verticale o a incrocio
+  secondo i tile stradali adiacenti.
+- Impronta Eco per struttura (da −5 molto inquinante a +4 rigenerativa,
+  es. carbone −5, manifattura −2, parco +3, eolico/solare +4) visibile
+  passando il mouse sul tile.
+- TOOLTIP SUGGERIMENTI: fermando il cursore 1 secondo su un indicatore del
+  pannello destro compare una finestrella con consigli DINAMICI (calcolati
+  sullo stato attuale) sulle azioni per migliorare quell'indice.
 - Pannello destro "Cruscotto ESG": gauge del Rating ESG complessivo, 7 barre
   di area A–G con punteggio −1…+5 colorate (rosso sotto 0, verde sopra 3),
   badge del livello attuale (Base/Argento/Oro/Platino).
@@ -166,38 +201,53 @@ crescono; città inquinate e corrotte si spopolano anche se ricche.
   "EcoCity ESG".
 
 --------------------------------------------------------------------------------
-6. DATI E ARCHITETTURA (entità Base44)
+6. DATI E ARCHITETTURA (CLAUDE CODE)
 --------------------------------------------------------------------------------
-- Entità City: nome, seed mappa, griglia (JSON), fondi, anno, popolazione,
-  punteggi area A–G, rating ESG, livello, integrità, felicità, storico KPI
-  (array per i grafici), ordinanze attive, obbligazioni.
-- Entità SavedGame/slot multipli per utente (autenticazione utenti attiva:
-  ogni utente vede solo le sue città).
-- Classifica pubblica opzionale: le migliori città per Rating ESG.
+- App single-file: EcoCityESG.html (HTML+CSS+JS con canvas 2D), nessuna
+  dipendenza esterna, gira aprendo il file nel browser.
+- Stato City: griglia (JSON), fondi, data, popolazione, lavoro, difficoltà,
+  punteggi area A–G, rating ESG, livello, integrità, felicità, storico KPI,
+  ordinanze attive, obbligazioni.
+- Salvataggio/caricamento in localStorage del browser (Salva/Carica dal menù
+  ☰); il salvataggio in progettazione esclude le bozze non applicate.
+- Versionamento con Git nella cartella di progetto: un commit con tag a ogni
+  versione (+0.1 per modifica, +1.0 per livello completato); rollback sempre
+  possibile a qualunque versione.
 - Tutta la logica di simulazione lato client (tick di simulazione in
-  JavaScript); salvataggio periodico e manuale dello stato su entità City.
-- Nessuna API esterna necessaria.
+  JavaScript). Nessuna API esterna necessaria.
 
 --------------------------------------------------------------------------------
-7. PIANO DI COSTRUZIONE RICHIESTO (in fasi, per iterazioni successive)
+7. LIVELLI DI DIFFICOLTÀ (ex fasi di costruzione, ora scelte dal giocatore)
 --------------------------------------------------------------------------------
-FASE 1 (MVP): mappa con griglia e terreno, zonizzazione RCI, strade, una
-centrale a carbone + eolico/solare, crescita zone con domanda, fondi e tasse,
-tick temporale, salvataggio.
-FASE 2: acqua, servizi con raggi di copertura, verde/parchi, rifiuti,
-traffico, inquinamento, felicità.
-FASE 3: motore ESG completo (7 aree, punteggi −1…+5, pesi, livelli),
-cruscotto ESG, report annuale, ordinanze.
-FASE 4: eventi di governance/corruzione, giornale, disastri e resilienza,
-grafici storici, mappe tematiche, tutorial, classifica.
-Costruisci ora la FASE 1 e predisponi la struttura dati per le fasi
-successive.
+Le quattro fasi di sviluppo diventano i LIVELLI DI DIFFICOLTÀ del gioco. Il
+giocatore sceglie il livello ALL'INIZIO della partita (dopo "Inizia a
+governare", prima della progettazione); una volta iniziato il gioco NON è
+più possibile cambiarlo. Ogni livello attiva i sistemi di quello precedente
+più i propri, e rende l'economia progressivamente più severa (meno fondi
+iniziali, manutenzioni più care).
+
+PRINCIPIANTE (ex Fase 1): mappa con griglia e terreno, zonizzazione ATM,
+strade, centrale a carbone + eolico/solare, crescita zone con domanda, fondi
+e tasse, tick temporale, salvataggio. Aree ESG attive: A, F, G.
+FACILE (ex Fase 2): + acqua (torri idriche con raggio, depuratore), servizi
+con raggi di copertura (polizia, pompieri, ospedale, scuola), rifiuti
+(discarica vs centro riciclo), traffico, inquinamento, felicità estesa.
+Aree ESG attive: A, C, D, E, F, G.
+NORMALE (ex Fase 3): + motore ESG completo (7 aree con pesi), report annuale,
+ordinanze.
+DIFFICILE (ex Fase 4): + eventi di governance/corruzione, giornale completo,
+disastri e resilienza, grafici storici, mappe tematiche, classifica.
 
 --------------------------------------------------------------------------------
 8. CRITERI DI ACCETTAZIONE
 --------------------------------------------------------------------------------
-1. Una partita nuova è giocabile in <10 secondi dal login.
-2. Zonizzare R+C+I con strada ed energia fa crescere la popolazione.
+1. Una partita nuova è giocabile in <10 secondi dall'apertura del file.
+2. Zonizzare A+T+M con strada ed energia fa crescere la popolazione; senza
+   centrale la popolazione resta a zero.
+2-bis. Il gioco inizia in pausa; la progettazione compare solo dopo "Inizia a
+   governare" e la scelta della difficoltà; UNDO/ANNULLA/APPLICA e blocco
+   budget del preventivo funzionano come da sezione 2; il livello di
+   difficoltà non è modificabile a partita iniziata.
 3. Costruire solo carbone/discariche/asfalto fa scendere il punteggio ESG
    sotto lo 0 in 2–3 anni di gioco, con avvisi sul giornale.
 4. Sostituire carbone con eolico+solare e piantare parchi porta l'area A e G
