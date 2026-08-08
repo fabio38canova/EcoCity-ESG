@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>EcoCity ESG — Fase 1 (MVP)</title>
+<style>
+  :root { --bg:#1a2420; --panel:#243430; --line:#3a4f45; --txt:#e8f0ea; --dim:#9ab5a5; --acc:#5fd08a; --warn:#e8b84b; --bad:#e06050; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--txt); font-family:"Segoe UI",system-ui,sans-serif; font-size:14px; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  header { display:flex; align-items:center; gap:14px; padding:6px 12px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header .logo { font-weight:800; color:var(--acc); letter-spacing:.5px; }
+  header .stat { background:#1c2a25; border:1px solid var(--line); border-radius:6px; padding:3px 10px; white-space:nowrap; }
+  header .stat b { color:var(--acc); }
+  header .stat.neg b { color:var(--bad); }
+  header .stat.pw-green b { color:var(--acc); }
+  header .stat.pw-orange b { color:var(--warn); }
+  header .stat.pw-red b { color:var(--bad); }
+  .spd button { background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:4px; padding:3px 8px; cursor:pointer; }
+  .spd button.on { background:var(--acc); color:#10201a; font-weight:700; }
+  main { flex:1; display:flex; min-height:0; position:relative; }
+  /* menù di sistema */
+  #btn-sys { background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:4px 12px; cursor:pointer; font-size:16px; }
+  #sysmenu { display:none; position:absolute; top:36px; right:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; z-index:30; min-width:170px; box-shadow:0 6px 22px rgba(0,0,0,.55); }
+  #sysmenu button { display:block; width:100%; text-align:left; background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:7px 10px; margin:3px 0; cursor:pointer; font-size:13px; }
+  #sysmenu button:hover { background:#2a3f36; }
+  /* finestra flottante di progettazione */
+  #planpanel { display:none; position:absolute; top:14px; left:184px; width:200px; background:var(--panel); border:1px solid var(--warn); border-radius:10px; padding:8px; z-index:20; box-shadow:0 6px 22px rgba(0,0,0,.55); }
+  #planpanel .ph { cursor:move; font-weight:700; color:var(--warn); font-size:12px; letter-spacing:.5px; margin-bottom:5px; user-select:none; }
+  /* tooltip suggerimenti indicatori */
+  [data-hint] { cursor:help; }
+  #tip { display:none; position:fixed; z-index:40; max-width:250px; background:#101a15; border:1px solid var(--acc); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--txt); box-shadow:0 6px 20px rgba(0,0,0,.6); }
+  #tip b { color:var(--acc); }
+  /* toast di conferma azioni */
+  #toast { display:none; position:fixed; bottom:26px; left:50%; transform:translateX(-50%); background:#101a15; border:1px solid var(--acc); color:var(--txt); padding:10px 20px; border-radius:10px; z-index:50; font-size:14px; box-shadow:0 8px 26px rgba(0,0,0,.6); }
+  #toolbar { width:170px; background:var(--panel); border-right:1px solid var(--line); padding:8px; overflow-y:auto; }
+  #toolbar h4 { font-size:11px; text-transform:uppercase; color:var(--dim); margin:10px 0 4px; }
+  #toolbar button { display:block; width:100%; text-align:left; background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:5px 8px; margin:2px 0; cursor:pointer; font-size:13px; }
+  #toolbar button.on { background:var(--acc); color:#10201a; font-weight:700; }
+  #toolbar button small { float:right; color:var(--dim); }
+  #toolbar button.on small { color:#10201a; }
+  #viewport { flex:1; overflow:auto; background:#0d1512; position:relative; scrollbar-color:#4a6355 #101a15; }
+  #viewport::-webkit-scrollbar { width:13px; height:13px; }
+  #viewport::-webkit-scrollbar-track { background:#101a15; }
+  #viewport::-webkit-scrollbar-thumb { background:#4a6355; border-radius:7px; border:2px solid #101a15; }
+  #viewport::-webkit-scrollbar-thumb:hover { background:#5fd08a; }
+  #viewport::-webkit-scrollbar-corner { background:#101a15; }
+  #cv { display:block; image-rendering:pixelated; cursor:crosshair; }
+  #side { width:230px; background:var(--panel); border-left:1px solid var(--line); padding:10px; overflow-y:auto; }
+  #side h3 { font-size:13px; color:var(--acc); margin-bottom:6px; }
+  .esgbar { margin:7px 0; }
+  .esgbar .lab { display:flex; justify-content:space-between; font-size:12px; color:var(--dim); }
+  .esgbar .tr { height:10px; background:#16211d; border-radius:5px; margin-top:2px; position:relative; overflow:hidden; }
+  .esgbar .fl { height:100%; border-radius:5px; transition:width .5s; }
+  .demand { display:flex; gap:8px; margin:6px 0 10px; }
+  .demand .d { flex:1; text-align:center; font-size:11px; color:var(--dim); }
+  .demand .bar { height:34px; background:#16211d; border-radius:4px; position:relative; overflow:hidden; }
+  .demand .bar i { position:absolute; bottom:0; left:0; right:0; }
+  #badge { text-align:center; padding:6px; border-radius:8px; border:1px dashed var(--line); margin:8px 0; font-weight:700; }
+  #news { font-size:12px; color:var(--warn); min-height:32px; margin-top:8px; border-top:1px solid var(--line); padding-top:6px; }
+  #tileinfo { font-size:12px; color:var(--dim); min-height:30px; margin-top:6px; }
+  .row { display:flex; gap:6px; margin-top:8px; }
+  .row button { flex:1; background:#1c2a25; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:5px; cursor:pointer; }
+  label.tx { font-size:12px; color:var(--dim); display:block; margin-top:8px; }
+  input[type=range] { width:100%; }
+  #help { position:absolute; inset:0; background:rgba(10,16,13,.92); z-index:10; display:flex; align-items:center; justify-content:center; }
+  #help .card { max-width:560px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; line-height:1.55; }
+  #help h2 { color:var(--acc); margin-bottom:8px; }
+  #help ol { padding-left:20px; margin:8px 0; }
+  #help button { margin-top:10px; background:var(--acc); border:none; color:#10201a; font-weight:700; padding:8px 18px; border-radius:8px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">🌿 EcoCity ESG</span>
+  <span class="stat" id="s-date">Gen 2026</span>
+  <span class="stat" id="s-funds">€ 20.000</span>
+  <span class="stat" id="s-pop">Pop. 0</span>
+  <span class="stat" id="s-pow">⚡ 0/0 MW</span>
+  <span class="spd">
+    <button id="sp0" class="on">⏸</button><button id="sp1">▶</button><button id="sp2">▶▶</button><button id="sp3">▶▶▶</button>
+  </span>
+  <span class="spd">
+    <button id="zo" title="Zoom indietro">🔍−</button><button id="zi" title="Zoom avanti">🔍+</button>
+  </span>
+  <span class="syswrap" style="margin-left:auto;position:relative;">
+    <button id="btn-sys" title="Menù di sistema">☰</button>
+    <div id="sysmenu">
+      <button id="btn-save">💾 Salva città</button>
+      <button id="btn-load">📂 Carica città</button>
+      <button id="btn-new">🆕 Nuova città</button>
+      <button id="btn-help">❓ Aiuto</button>
+    </div>
+  </span>
+</header>
+<main>
+  <div id="toolbar">
+    <h4>Zone</h4>
+    <button data-tool="res">🏠 Residenziale <small>€25</small></button>
+    <button data-tool="com">🏬 Commerciale <small>€25</small></button>
+    <button data-tool="ind">🏭 Industriale <small>€25</small></button>
+    <h4>Reti</h4>
+    <button data-tool="road">🛣 Strada <small>€10</small></button>
+    <h4>Energia</h4>
+    <button data-tool="coal">🏭 Carbone 200MW <small>€3000</small></button>
+    <button data-tool="wind">🌬 Eolico 25MW <small>€600</small></button>
+    <button data-tool="solar">☀ Solare 50MW <small>€1000</small></button>
+    <h4>Verde</h4>
+    <button data-tool="park">🌳 Parco <small>€120</small></button>
+    <button data-tool="tree">🌲 Albero <small>€8</small></button>
+    <h4>Altro</h4>
+    <button data-tool="dozer">🚜 Demolisci <small>€3</small></button>
+    <h4>Progettazione</h4>
+    <button id="btn-plan">📐 Modalità progetto</button>
+    <label class="tx">Tasse: <b id="taxlab">7%</b></label>
+    <input type="range" id="tax" min="0" max="20" value="7">
+  </div>
+  <div id="viewport"><canvas id="cv"></canvas></div>
+  <div id="side">
+    <h3>Domanda RCI</h3>
+    <div class="demand" data-hint="rci">
+      <div class="d"><div class="bar"><i id="dR" style="background:#4caf50"></i></div>R</div>
+      <div class="d"><div class="bar"><i id="dC" style="background:#42a5f5"></i></div>C</div>
+      <div class="d"><div class="bar"><i id="dI" style="background:#ffb300"></i></div>I</div>
+    </div>
+    <h3>Cruscotto ESG (anteprima Fase 3)</h3>
+    <div class="esgbar" data-hint="A"><div class="lab"><span>A — Verde urbano</span><span id="vA">0.0</span></div><div class="tr"><div class="fl" id="bA"></div></div></div>
+    <div class="esgbar" data-hint="D"><div class="lab"><span>D — Mobilità*</span><span id="vD">—</span></div><div class="tr"><div class="fl" id="bD"></div></div></div>
+    <div class="esgbar" data-hint="F"><div class="lab"><span>F — Energia pulita</span><span id="vF">0.0</span></div><div class="tr"><div class="fl" id="bF"></div></div></div>
+    <div class="esgbar" data-hint="G"><div class="lab"><span>G — Clima/CO₂</span><span id="vG">0.0</span></div><div class="tr"><div class="fl" id="bG"></div></div></div>
+    <div id="badge" data-hint="badge">Livello: —</div>
+    <div style="font-size:11px;color:var(--dim)">Scala −1…+5 (0 = prassi corrente, 3 = buona pratica, 5 = eccellenza) secondo SCE 001:2026. *Aree D, B, C, E complete nelle Fasi 2–3.</div>
+    <h3 style="margin-top:10px">Felicità</h3>
+    <div class="esgbar" data-hint="H"><div class="tr"><div class="fl" id="bH" style="background:#e879a0"></div></div><div class="lab"><span></span><span id="vH">50%</span></div></div>
+    <div id="news">Benvenuto, Sindaco! Fonda la tua città sostenibile.</div>
+    <div id="tileinfo"></div>
+  </div>
+  <div id="planpanel">
+    <div class="ph">📐 PROGETTO (trascina qui)</div>
+    <div id="prevlab" style="font-size:12px;margin-bottom:5px;">Preventivo: € 0</div>
+    <div class="row"><button id="btn-undo">↩ UNDO</button></div>
+    <div class="row"><button id="btn-cancel">✖ ANNULLA</button><button id="btn-apply">✔ APPLICA</button></div>
+  </div>
+  <div id="tip"></div>
+  <div id="toast"></div>
+</main>
+
+<div id="help">
+  <div class="card">
+    <h2>🌿 EcoCity ESG — Guida rapida</h2>
+    <p>Sei il Sindaco. Fai crescere la città, ma verrai giudicato con il <b>Rating ESG</b> (standard SCE 001:2026), non solo con i soldi.</p>
+    <ol>
+      <li>Il gioco inizia <b>in pausa</b> e in <b>📐 modalità progettazione</b>: traccia la tua città in bozza (vedi il PREVENTIVO), poi premi <b>✔ APPLICA</b> e avvia il tempo con <b>▶</b>.</li>
+      <li>Costruisci <b>strade</b> 🛣 e una <b>centrale</b> (⚡ il carbone è economico ma inquina; eolico e solare sono puliti).</li>
+      <li>Traccia zone <b>R</b> (case), <b>C</b> (negozi) e <b>I</b> (fabbriche) vicino alle strade: cresceranno da sole se c'è energia e domanda.</li>
+      <li>Pianta <b>parchi e alberi</b>: alzano il punteggio Verde (Area A) e la felicità.</li>
+      <li>Osserva il <b>Cruscotto ESG</b>: sotto 0 = città insostenibile; sopra 3 = buona pratica; l'obiettivo è il livello <b>Platino</b>.</li>
+    </ol>
+    <p style="font-size:12px;color:var(--dim)">Trascina il mouse per costruire in serie. Zoom con 🔍+/− in alto. Con <b>📐 Modalità progetto</b> tracci le opere in bozza con PREVENTIVO: UNDO annulla l'ultima, ANNULLA ripristina tutto, APPLICA realizza e addebita. Senza centrale elettrica le zone non si sviluppano (puntino rosso). Passa il mouse su un tile per vederne l'impronta Eco (da −5 a +4).</p>
+    <button id="btn-start">Inizia a governare</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ============ COSTANTI ============
+const N = 64; let TS = 12;                   // griglia e dimensione tile (variabile per lo zoom)
+const ZOOMS = [8, 10, 12, 16, 22];           // livelli di zoom disponibili
+// Impronta ecologica per struttura (da −5 molto inquinante a +4 rigenerativa) — cfr. SCE 001:2026
+const ECO = {coal:-5, ind:-2, road:-1, com:-1, res:0, grass:0, water:1, tree:2, park:3, wind:4, solar:4};
+const COSTS = {res:25, com:25, ind:25, road:10, coal:3000, wind:600, solar:1000, park:120, tree:8, dozer:3};
+const MW = {coal:200, wind:25, solar:50};
+const MAINT = {road:.5, coal:60, wind:5, solar:6, park:2};
+const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+
+// ============ STATO ============
+let S = null;        // stato città
+let tool = null, speed = 0, timer = null, painting = false;   // si parte in pausa
+let lastPowered = false;                                     // rete alimentata (per il rendering)
+let planMode = false, planActs = [], planBackup = null, planCost = 0, prevSpeed = 1;
+let firstStart = true;                                       // true finché non si preme "Inizia a governare"
+
+function newCity(){
+  const g = [];
+  // terreno: prato + fiume sinuoso + boschi
+  for(let y=0;y<N;y++){ g.push([]); for(let x=0;x<N;x++) g[y].push({t:"grass",lvl:0}); }
+  let rx = N*0.7;
+  for(let y=0;y<N;y++){
+    rx += (Math.random()-0.5)*2.2;
+    for(let dx=0;dx<3;dx++){ const X=Math.round(rx)+dx; if(X>=0&&X<N) g[y][X].t="water"; }
+  }
+  for(let k=0;k<26;k++){
+    const cx=Math.floor(Math.random()*N), cy=Math.floor(Math.random()*N), r=2+Math.random()*3;
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++)
+      if(g[y][x].t==="grass" && (x-cx)**2+(y-cy)**2 < r*r && Math.random()<.8) g[y][x].t="tree";
+  }
+  return { g, funds:20000, month:0, year:2026, tax:7, pop:0, jobs:0,
+           demR:.6, demC:.1, demI:.4, happy:55, esg:{A:0,F:0,G:0}, news:[] };
+}
+
+// ============ RENDER ============
+const cv = document.getElementById("cv"), cx2 = cv.getContext("2d");
+cv.width = N*TS; cv.height = N*TS;
+const COL = { grass:"#3a5f3a", water:"#2b6ea8", tree:"#1e4520", road:"#5a5a5a",
+              res:["#4d7a4d","#5f9c5f","#74bd74","#8fdf8f"], com:["#3d6a94","#4d85ba","#5da0df","#79bbf2"],
+              ind:["#8a7a3a","#a8963f","#c7b148","#e0cc55"], coal:"#3b3b41", wind:"#cfe3ea", solar:"#28455f", park:"#6fc46f" };
+
+function isRoad(x,y){ return x>=0&&y>=0&&x<N&&y<N&&S.g[y][x].t==="road"; }
+function draw(){
+  const t2=TS/2;
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+    const c = S.g[y][x];
+    const zone = (c.t==="res"||c.t==="com"||c.t==="ind");
+    let col;
+    if(zone) col = c.lvl>0 ? COL[c.t][Math.min(c.lvl,3)] : "#445a48";   // lotto libero: quasi prato
+    else col = COL[c.t] || "#000";
+    cx2.fillStyle = col; cx2.fillRect(x*TS,y*TS,TS,TS);
+    if(c.t==="tree"){ cx2.fillStyle="#2e6b30"; cx2.beginPath(); cx2.arc(x*TS+t2,y*TS+t2,TS*.33,0,7); cx2.fill(); }
+    if(c.t==="park"){ cx2.fillStyle="#2e8b3a"; cx2.beginPath(); cx2.arc(x*TS+t2,y*TS+t2,TS*.25,0,7); cx2.fill(); }
+    if(c.t==="road"){
+      // segnaletica orientata: orizzontale, verticale o incrocio secondo i vicini
+      const H = isRoad(x-1,y) || isRoad(x+1,y);
+      const V = isRoad(x,y-1) || isRoad(x,y+1);
+      cx2.fillStyle="#c9c94a";
+      if(H && !V)      cx2.fillRect(x*TS,      y*TS+t2-1, TS, 2);
+      else if(V && !H) cx2.fillRect(x*TS+t2-1, y*TS,      2,  TS);
+      else { cx2.fillRect(x*TS, y*TS+t2-1, TS, 2); cx2.fillRect(x*TS+t2-1, y*TS, 2, TS); }
+    }
+    if(c.t==="coal"){ cx2.fillStyle="#e06050"; cx2.fillRect(x*TS+TS*.25,y*TS+TS*.25,TS*.5,TS*.5); }
+    if(c.t==="wind"){ cx2.strokeStyle="#4a90b8"; cx2.beginPath(); cx2.moveTo(x*TS+t2,y*TS+TS*.83); cx2.lineTo(x*TS+t2,y*TS+TS*.17); cx2.stroke(); }
+    if(c.t==="solar"){ cx2.fillStyle="#4aa3d8"; cx2.fillRect(x*TS+TS*.17,y*TS+TS*.33,TS*.66,TS*.33); }
+    if(zone && c.lvl===0){                                              // lotto zonizzato ma non edificato
+      cx2.strokeStyle=COL[c.t][3]; cx2.strokeRect(x*TS+1.5,y*TS+1.5,TS-3,TS-3);
+    }
+    if(zone && !lastPowered){                                           // indicatore "manca corrente"
+      cx2.fillStyle="#e06050"; cx2.fillRect(x*TS+TS-4,y*TS+1,3,3);
+    }
+  }
+  if(planMode){                                                         // overlay del progetto (tratteggio)
+    cx2.strokeStyle="rgba(255,255,255,.85)"; cx2.setLineDash([3,2]);
+    for(const a of planActs) cx2.strokeRect(a.x*TS+1,a.y*TS+1,TS-2,TS-2);
+    cx2.setLineDash([]);
+  }
+}
+function setZoom(dir){
+  const vp = document.getElementById("viewport");
+  // frazione del punto attualmente al centro della vista, da preservare
+  const fx = (vp.scrollLeft + vp.clientWidth/2)  / cv.width;
+  const fy = (vp.scrollTop  + vp.clientHeight/2) / cv.height;
+  let i = ZOOMS.indexOf(TS); if(i<0) i=2;
+  i = Math.max(0, Math.min(ZOOMS.length-1, i+dir));
+  TS = ZOOMS[i]; cv.width = N*TS; cv.height = N*TS;
+  vp.scrollLeft = fx*cv.width  - vp.clientWidth/2;
+  vp.scrollTop  = fy*cv.height - vp.clientHeight/2;
+  draw();
+}
+
+// ============ COSTRUZIONE ============
+function canBuild(t){ return t!=="water"; }
+function place(x,y){
+  if(!tool || tool==="pan" || x<0||y<0||x>=N||y>=N) return;
+  const c = S.g[y][x];
+  // validazione comune
+  let ok=false, cost=0;
+  if(tool==="dozer"){ ok = (c.t!=="grass" && c.t!=="water"); cost = COSTS.dozer; }
+  else {
+    ok = canBuild(c.t) && (c.t==="grass" || c.t==="tree");
+    cost = COSTS[tool];
+  }
+  if(!ok) return;
+  if(planMode){
+    // ---- MODALITÀ PROGETTAZIONE: nessun addebito, solo preventivo ----
+    if(planCost + cost >= S.funds){
+      pushNews("⛔ PREVENTIVO oltre la disponibilità: applica, annulla o usa UNDO.");
+      updatePrev(true); return;
+    }
+    planActs.push({x, y, prev:{t:c.t, lvl:c.lvl}, cost});
+    if(tool==="dozer"){ c.t="grass"; c.lvl=0; } else { c.t=tool; c.lvl=0; }
+    planCost += cost; updatePrev();
+  } else {
+    // ---- MODALITÀ NORMALE: addebito immediato ----
+    if(S.funds < cost){ pushNews("💸 Fondi insufficienti!"); return; }
+    S.funds -= cost;
+    if(tool==="dozer"){ c.t="grass"; c.lvl=0; } else { c.t=tool; c.lvl=0; }
+  }
+  draw(); refreshHUD();
+}
+
+// ============ PROGETTAZIONE ============
+function enterPlan(){
+  planMode=true; planActs=[]; planCost=0;
+  planBackup = JSON.stringify(S.g);
+  prevSpeed = speed; setSpeed(0);          // all'uscita si torna alla velocità precedente (anche pausa)
+  document.getElementById("planpanel").style.display="block";
+  document.getElementById("btn-plan").classList.add("on");
+  updatePrev(); pushNews("📐 Progettazione attiva: simulazione in pausa, i tracciati sono solo bozze.");
+  draw();
+}
+function exitPlan(){
+  planMode=false; planActs=[]; planCost=0; planBackup=null;
+  document.getElementById("planpanel").style.display="none";
+  document.getElementById("btn-plan").classList.remove("on");
+  setSpeed(prevSpeed); draw(); refreshHUD();
+}
+function undoPlan(){
+  const a = planActs.pop(); if(!a) return;
+  S.g[a.y][a.x] = {t:a.prev.t, lvl:a.prev.lvl};
+  planCost -= a.cost; updatePrev(); draw();
+}
+function cancelPlan(){
+  S.g = JSON.parse(planBackup);
+  exitPlan(); pushNews("✖ Progetto annullato: mappa ripristinata.");
+}
+function applyPlan(){
+  if(planActs.length===0){ exitPlan(); return; }
+  S.funds -= planCost;
+  const n = planActs.length, spesa = planCost;
+  exitPlan();
+  pushNews(`✔ Progetto realizzato: ${n} interventi, spesi € ${spesa.toLocaleString("it-IT")}.`);
+}
+function updatePrev(over){
+  const e = document.getElementById("prevlab");
+  const sfora = over || planCost >= S.funds;
+  e.innerHTML = `Preventivo: <b>€ ${planCost.toLocaleString("it-IT")}</b><br>Disponibili: € ${S.funds.toLocaleString("it-IT")}` + (sfora ? "<br>⚠ BUDGET SFORATO" : "");
+  e.style.color = sfora ? "var(--bad)" : "var(--txt)";
+}
+function tileAt(ev){
+  const r = cv.getBoundingClientRect();
+  return [Math.floor((ev.clientX-r.left)/TS), Math.floor((ev.clientY-r.top)/TS)];
+}
+// pan: strumento ✋ oppure tasto centrale del mouse con qualsiasi strumento
+let panning=false, panSX=0, panSY=0, panL=0, panT=0;
+const vp = document.getElementById("viewport");
+cv.addEventListener("mousedown", ev=>{
+  if(ev.button===1 || tool==="pan"){
+    panning=true; panSX=ev.clientX; panSY=ev.clientY; panL=vp.scrollLeft; panT=vp.scrollTop;
+    cv.style.cursor="grabbing"; ev.preventDefault(); return;
+  }
+  painting=true; const [x,y]=tileAt(ev); place(x,y);
+});
+cv.addEventListener("auxclick", ev=>ev.preventDefault());
+cv.addEventListener("mousemove", ev=>{
+  if(panning){
+    vp.scrollLeft = panL - (ev.clientX - panSX);
+    vp.scrollTop  = panT - (ev.clientY - panSY);
+    return;
+  }
+  const [x,y]=tileAt(ev);
+  if(painting) place(x,y);
+  if(x>=0&&y>=0&&x<N&&y<N){
+    const c=S.g[y][x];
+    const nomi={grass:"Prato",water:"Acqua",tree:"Bosco",road:"Strada",res:"Residenziale",com:"Commerciale",ind:"Industriale",coal:"Centrale a carbone",wind:"Pala eolica",solar:"Impianto solare",park:"Parco"};
+    const e = ECO[c.t] ?? 0;
+    const eco = ` — Eco ${e>0?"+":""}${e} ${e<=-3?"🔴":e<0?"🟠":e===0?"⚪":e<3?"🟢":"💚"}`;
+    document.getElementById("tileinfo").textContent = `(${x},${y}) ${nomi[c.t]||c.t}${c.lvl?` — liv. ${c.lvl}`:""}${eco}`;
+  }
+});
+addEventListener("mouseup", ()=>{
+  painting=false;
+  if(panning){ panning=false; cv.style.cursor = tool==="pan" ? "grab" : "crosshair"; }
+});
+
+// ============ SIMULAZIONE (tick mensile) ============
+function nearRoad(x,y,d=3){
+  for(let dy=-d;dy<=d;dy++) for(let dx=-d;dx<=d;dx++){
+    const X=x+dx,Y=y+dy;
+    if(X>=0&&Y>=0&&X<N&&Y<N && S.g[Y][X].t==="road") return true;
+  }
+  return false;
+}
+function counts(){
+  const c={res:0,com:0,ind:0,road:0,coal:0,wind:0,solar:0,park:0,tree:0,resL:0,comL:0,indL:0};
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+    const t=S.g[y][x];
+    if(c[t.t]!==undefined) c[t.t]++;
+    if(t.t==="res") c.resL+=t.lvl;
+    if(t.t==="com") c.comL+=t.lvl;
+    if(t.t==="ind") c.indL+=t.lvl;
+  }
+  return c;
+}
+function tick(){
+  const c = counts();
+  const cap = c.coal*MW.coal + c.wind*MW.wind + c.solar*MW.solar;
+  const dem = (c.resL+c.comL+c.indL)*2 + (c.res+c.com+c.ind);
+  const powered = cap > 0 && cap >= dem;     // senza centrali la rete NON è mai alimentata
+  lastPowered = powered;
+  S.pop  = c.resL*8;
+  S.jobs = c.comL*6 + c.indL*9;
+  // domanda RCI
+  S.demR = Math.max(-1, Math.min(1, (S.jobs*1.15 - S.pop)/120 + .25));
+  S.demC = Math.max(-1, Math.min(1, (S.pop*.30 - c.comL*6)/80));
+  S.demI = Math.max(-1, Math.min(1, (S.pop*.55 - c.indL*9)/100 + .15));
+  // crescita/decadenza zone (scansione completa delle zone)
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+    const t=S.g[y][x];
+    if(t.t!=="res"&&t.t!=="com"&&t.t!=="ind") continue;
+    const d = t.t==="res"?S.demR : t.t==="com"?S.demC : S.demI;
+    if(powered && d>0 && Math.random()<d*.45*(1 - S.tax/40) && nearRoad(x,y)){ if(t.lvl<3) t.lvl++; }
+    else if((!powered || d<-.3) && Math.random()<.2){ if(t.lvl>0) t.lvl--; }
+  }
+  // bilancio mensile
+  const entrate = (S.pop*.9 + c.comL*4 + c.indL*5) * S.tax/10;
+  const uscite  = c.road*MAINT.road + c.coal*MAINT.coal + c.wind*MAINT.wind + c.solar*MAINT.solar + c.park*MAINT.park;
+  S.funds += Math.round(entrate - uscite);
+  // ESG — punteggi -1..+5
+  const popX = Math.max(S.pop,150);                                 // floor anti-inflazione per città piccole
+  const greenPC = c.park*180 / popX;                                // m² di verde FRUIBILE (parchi) per abitante — cfr. SCE A-03
+  const canopy  = (c.tree + c.park) / (N*N) * 100;
+  S.esg.A = clampScore(lerpScore(greenPC, 9, 15, 25)*.6 + lerpScore(canopy, 4, 8, 12)*.4);
+  const renew = cap>0 ? (c.wind*MW.wind + c.solar*MW.solar)/cap*100 : 0;
+  S.esg.F = clampScore(lerpScore(renew, 20, 40, 60));
+  const co2 = (c.coal*95 + c.indL*6) / popX * 10;                    // tCO2e pro capite (stilizzato)
+  S.esg.G = clampScore(lerpScore(-co2, -6, -4, -2));                 // meno CO2 = più punti
+  // felicità
+  const unemp = Math.max(0, (S.pop - S.jobs)/Math.max(S.pop,1));
+  S.happy = Math.round(Math.max(5, Math.min(98,
+    55 + S.esg.A*4 + S.esg.G*3 - unemp*35 - (S.tax-7)*2 + (powered?0:-18))));
+  // eventi/news
+  if(!powered && Math.random()<.5) pushNews("⚡ Blackout! Serve più capacità elettrica.");
+  if(co2>6 && Math.random()<.15) pushNews("🏭 Il Gazzettino: «Smog alle stelle, cittadini esasperati»");
+  if(S.esg.A>=3 && Math.random()<.06) pushNews("🌳 Il Gazzettino: «La città verde fa scuola in Europa»");
+  if(S.funds<0 && Math.random()<.3) pushNews("💸 Bilancio in rosso: taglia i costi o alza le tasse.");
+  // data
+  S.month++; if(S.month>11){ S.month=0; S.year++; pushNews(`📊 Report ESG ${S.year-1}: ${badgeName()}`); }
+  draw(); refreshHUD();
+}
+function lerpScore(v, s0, s3, s5){       // benchmark 0 / 3 / 5 con interpolazione lineare (stile ITACA)
+  if(v<=s0) return Math.max(-1, (v-s0)/Math.abs(s0||1)*1);
+  if(v>=s5) return 5;
+  if(v<=s3) return (v-s0)/(s3-s0)*3;
+  return 3 + (v-s3)/(s5-s3)*2;
+}
+function clampScore(v){ return Math.round(Math.max(-1,Math.min(5,v))*10)/10; }
+function badgeName(){
+  const m=(S.esg.A+S.esg.F+S.esg.G)/3;
+  if(m>=3.5 && S.esg.A>=4 && S.esg.G>=4) return "🏆 PLATINO";
+  if(m>=2.5) return "🥇 ORO";
+  if(m>=1.5) return "🥈 ARGENTO";
+  if(m>=0)   return "✅ BASE";
+  return "❌ NON CONFORME";
+}
+function pushNews(msg){ document.getElementById("news").textContent = msg; }
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(()=>{ t.style.display = "none"; }, 2600);
+}
+
+// ============ HUD ============
+function refreshHUD(){
+  const c = counts();
+  const cap = c.coal*MW.coal + c.wind*MW.wind + c.solar*MW.solar;
+  const dem = (c.resL+c.comL+c.indL)*2 + (c.res+c.com+c.ind);
+  document.getElementById("s-date").textContent = `${MESI[S.month]} ${S.year}`;
+  const f=document.getElementById("s-funds");
+  f.innerHTML = `€ <b>${S.funds.toLocaleString("it-IT")}</b>`; f.className = "stat"+(S.funds<0?" neg":"");
+  document.getElementById("s-pop").innerHTML = `Pop. <b>${S.pop.toLocaleString("it-IT")}</b> 😊${S.happy}%`;
+  const p=document.getElementById("s-pow");
+  p.innerHTML = `⚡ <b>${dem}/${cap} MW</b>`;
+  // colore per carico rete: <75% verde, 75–89% arancione, ≥90% rosso
+  const ratio = cap>0 ? dem/cap : (dem>0 ? 1 : 0);
+  p.className = "stat " + (ratio>=0.9 ? "pw-red" : ratio>=0.75 ? "pw-orange" : "pw-green");
+  setBar("dR",S.demR); setBar("dC",S.demC); setBar("dI",S.demI);
+  setESG("A",S.esg.A); setESG("F",S.esg.F); setESG("G",S.esg.G);
+  document.getElementById("vD").textContent="Fase 2";
+  document.getElementById("bD").style.width="0%";
+  document.getElementById("badge").textContent = "Livello: " + badgeName();
+  document.getElementById("bH").style.width = S.happy+"%";
+  document.getElementById("vH").textContent = S.happy+"%";
+}
+function setBar(id,v){ const e=document.getElementById(id); e.style.height=Math.round(Math.abs(v)*100)+"%"; e.style.opacity=v>0?1:.35; }
+function setESG(k,v){
+  document.getElementById("v"+k).textContent = v.toFixed(1);
+  const b=document.getElementById("b"+k);
+  b.style.width = ((v+1)/6*100)+"%";
+  b.style.background = v<0 ? "var(--bad)" : v<3 ? "var(--warn)" : "var(--acc)";
+}
+
+// ============ VELOCITÀ / SALVATAGGIO ============
+function setSpeed(s){
+  if(planMode && s>0){ pushNews("📐 In progettazione la simulazione resta in pausa: APPLICA o ANNULLA prima."); return; }
+  speed=s; clearInterval(timer);
+  [0,1,2,3].forEach(i=>document.getElementById("sp"+i).classList.toggle("on",i===s));
+  if(s>0) timer=setInterval(tick, [0,24000,12000,6000][s]); // 1x=24 s/mese, 2x=12 s, 4x=6 s
+}
+document.getElementById("sp0").onclick=()=>setSpeed(0);
+document.getElementById("sp1").onclick=()=>setSpeed(1);
+document.getElementById("sp2").onclick=()=>setSpeed(2);
+document.getElementById("sp3").onclick=()=>setSpeed(3);
+document.querySelectorAll("#toolbar button[data-tool]").forEach(b=>{
+  b.onclick=()=>{ tool = tool===b.dataset.tool ? null : b.dataset.tool;
+    document.querySelectorAll("#toolbar button[data-tool]").forEach(x=>x.classList.toggle("on",x.dataset.tool===tool));
+    cv.style.cursor = tool==="pan" ? "grab" : "crosshair"; };
+});
+document.getElementById("tax").oninput = e=>{ S.tax=+e.target.value; document.getElementById("taxlab").textContent=S.tax+"%"; };
+document.getElementById("btn-save").onclick = ()=>{
+  // in progettazione si salva la città REALE (le bozze non applicate sono escluse)
+  const data = planMode ? Object.assign({}, S, {g: JSON.parse(planBackup)}) : S;
+  localStorage.setItem("ecocity_esg", JSON.stringify(data));
+  toast(planMode ? "💾 Città salvata (bozze di progetto escluse)" : "💾 Città salvata");
+  pushNews("💾 Città salvata.");
+};
+document.getElementById("btn-new").onclick = ()=>{ if(planMode) cancelPlan(); if(confirm("Nuova città? Il salvataggio attuale resta finché non salvi di nuovo.")){ S=newCity(); draw(); refreshHUD(); } };
+document.getElementById("btn-load").onclick = ()=>{
+  const sv = localStorage.getItem("ecocity_esg");
+  if(!sv){ pushNews("⚠ Nessuna città salvata da caricare."); return; }
+  if(!confirm("Caricare la città salvata? I progressi non salvati andranno persi.")) return;
+  if(planMode){                    // scarta l'eventuale progetto in corso senza toccare la mappa che stiamo per sostituire
+    planMode=false; planActs=[]; planCost=0; planBackup=null;
+    document.getElementById("planpanel").style.display="none";
+    document.getElementById("btn-plan").classList.remove("on");
+  }
+  S = JSON.parse(sv);
+  document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
+  setSpeed(0); draw(); refreshHUD();
+  enterPlan();
+  toast("📂 Città caricata");
+  pushNews("📂 Città caricata: rivedila in progettazione, poi APPLICA e premi ▶.");
+};
+document.getElementById("btn-help").onclick = ()=>{ document.getElementById("help").style.display="flex"; };
+document.getElementById("btn-start").onclick = ()=>{
+  document.getElementById("help").style.display="none";
+  if(firstStart){
+    firstStart = false;
+    enterPlan();                  // la progettazione compare solo ORA
+    pushNews("📐 Progetta la tua città, poi APPLICA e premi ▶ per avviare il tempo.");
+  }
+};
+document.getElementById("zi").onclick = ()=>setZoom(1);
+document.getElementById("zo").onclick = ()=>setZoom(-1);
+// menù di sistema ☰
+const sysmenu = document.getElementById("sysmenu");
+document.getElementById("btn-sys").onclick = ev=>{
+  ev.stopPropagation();
+  sysmenu.style.display = sysmenu.style.display==="block" ? "none" : "block";
+};
+if(sysmenu.addEventListener) sysmenu.addEventListener("click", ()=>{ sysmenu.style.display="none"; });
+addEventListener("click", ev=>{
+  if(sysmenu.style.display==="block" && !ev.target.closest?.(".syswrap")) sysmenu.style.display="none";
+});
+// ============ TOOLTIP SUGGERIMENTI (hover 1 s sugli indicatori) ============
+function hintFor(k){
+  const c = counts();
+  const popX = Math.max(S.pop,150);
+  const greenPC = Math.round(c.park*180/popX);
+  const cap = c.coal*MW.coal + c.wind*MW.wind + c.solar*MW.solar;
+  const renew = cap>0 ? Math.round((c.wind*MW.wind + c.solar*MW.solar)/cap*100) : 0;
+  const co2 = Math.round((c.coal*95 + c.indL*6)/popX*100)/10;
+  switch(k){
+    case "A": return `<b>Area A — Verde urbano</b><br>Verde fruibile: ${greenPC} m²/ab (buono ≥15, eccellente ≥25).<br>• Pianta 🌳 parchi vicino alle case<br>• Aggiungi 🌲 alberi per la chioma urbana<br>• Non demolire il verde esistente`;
+    case "D": return `<b>Area D — Mobilità</b><br>Area completa nella Fase 2.<br>• Intanto progetta quartieri compatti: case vicine a negozi e lavoro<br>• Lascia spazio per ciclabili e trasporto pubblico`;
+    case "F": return `<b>Area F — Energia pulita</b><br>Rinnovabili: ${renew}% della capacità (buono ≥40%, eccellente ≥60%).<br>• Costruisci 🌬 eolico e ☀ solare<br>• Demolisci il carbone quando la capacità lo consente<br>• Evita il blackout: capacità ≥ domanda`;
+    case "G": return `<b>Area G — Clima/CO₂</b><br>Emissioni: ~${co2} t/ab (buono ≤4, eccellente ≤2).<br>• Riduci carbone e industria pesante<br>• Parchi e alberi assorbono CO₂ e calore<br>• Per il Platino servono A e G ≥ 4`;
+    case "H": {
+      const tips=[];
+      if(!lastPowered) tips.push("• Risolvi il blackout: più capacità elettrica");
+      if(S.pop > S.jobs) tips.push("• Mancano posti di lavoro: zona C e I");
+      if(S.tax > 9) tips.push("• Tasse alte: valuta di abbassarle");
+      if(greenPC < 15) tips.push("• Più verde vicino alle residenze");
+      if(!tips.length) tips.push("• Ottimo! Mantieni ambiente e lavoro in equilibrio");
+      return `<b>Felicità dei cittadini</b><br>${tips.join("<br>")}`;
+    }
+    case "rci": return `<b>Domanda RCI</b><br>Le barre indicano quali zone servono.<br>• R alta: traccia Residenziale<br>• C/I alte: servono negozi e fabbriche<br>• La crescita richiede strada vicina + energia`;
+    case "badge": return `<b>Livelli SCE 001:2026</b><br>Base: prerequisiti · Argento ≥40% · Oro ≥60% · Platino ≥80% con A e G ≥ 4.<br>• Alza le barre delle aree per salire di livello`;
+  }
+  return "";
+}
+(function(){
+  const tip = document.getElementById("tip");
+  const els = document.querySelectorAll("[data-hint]");
+  if(!els.forEach) return;                        // ambiente senza DOM reale
+  let tt = null;
+  els.forEach(el=>{
+    el.addEventListener("mouseenter", ()=>{
+      tt = setTimeout(()=>{
+        tip.innerHTML = hintFor(el.dataset.hint);
+        const r = el.getBoundingClientRect();
+        tip.style.display = "block";
+        tip.style.right = (innerWidth - r.left + 10) + "px";   // a sinistra del pannello
+        tip.style.left = "auto";
+        tip.style.top = Math.max(8, r.top - 8) + "px";
+      }, 1000);                                   // 1 secondo di sosta
+    });
+    el.addEventListener("mouseleave", ()=>{ clearTimeout(tt); tip.style.display="none"; });
+  });
+})();
+
+// trascinamento della finestra di progettazione
+(function(){
+  const pp = document.getElementById("planpanel");
+  const h = pp.querySelector ? pp.querySelector(".ph") : null;
+  if(!h) return;
+  let drag=false, dx=0, dy=0;
+  h.addEventListener("mousedown", e=>{ drag=true; dx=e.clientX-pp.offsetLeft; dy=e.clientY-pp.offsetTop; e.preventDefault(); });
+  addEventListener("mousemove", e=>{ if(drag){ pp.style.left=Math.max(0,e.clientX-dx)+"px"; pp.style.top=Math.max(0,e.clientY-dy)+"px"; } });
+  addEventListener("mouseup", ()=> drag=false);
+})();
+document.getElementById("btn-plan").onclick = ()=>{ planMode ? cancelPlan() : enterPlan(); };
+document.getElementById("btn-undo").onclick = undoPlan;
+document.getElementById("btn-cancel").onclick = cancelPlan;
+document.getElementById("btn-apply").onclick = applyPlan;
+
+// ============ AVVIO ============
+const saved = localStorage.getItem("ecocity_esg");
+S = saved ? JSON.parse(saved) : newCity();
+if(saved) document.getElementById("help").style.display="none";
+document.getElementById("tax").value=S.tax; document.getElementById("taxlab").textContent=S.tax+"%";
+draw(); refreshHUD();
+setSpeed(0);                      // il gioco inizia sempre IN PAUSA
+firstStart = !saved;
+if(saved){                        // partita caricata: niente guida, progettazione subito
+  enterPlan();
+  pushNews("📐 Rivedi la città in progettazione, poi APPLICA e premi ▶ per avviare il tempo.");
+}
+// per una nuova città la progettazione parte SOLO premendo "Inizia a governare" (guida in primo piano)
+</script>
+</body>
+</html>

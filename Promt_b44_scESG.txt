@@ -1,0 +1,215 @@
+================================================================================
+PROMPT PER BASE44 — PROGETTO "SIMCITY ESG"
+Gioco manageriale di costruzione e gestione urbana in stile SimCity 2000,
+basato su logiche ESG (Environmental, Social, Governance)
+Da incollare come primo prompt su app.base44.com con modalità PLAN attivata.
+================================================================================
+
+Voglio costruire una web app di gioco chiamata "SimCity ESG": un city-builder
+manageriale a turni/tempo reale ispirato a SimCity 2000 (Maxis), in cui il
+successo del giocatore NON si misura solo con soldi e crescita, ma soprattutto
+con punteggi ESG: sostenibilità Ambientale, qualità Sociale della vita e
+Governance corretta e trasparente. Il gioco implementa lo standard "SCE
+001:2026 — Standard per la Città Eco-Compatibile, Bio-Compatibile e a Misura
+d'Uomo" (7 aree tematiche A–G, scala di punteggio da −1 a +5, livelli Base /
+Argento / Oro / Platino), che descrivo in dettaglio più sotto.
+
+--------------------------------------------------------------------------------
+1. VISIONE E OBIETTIVO DEL GIOCO
+--------------------------------------------------------------------------------
+- Il giocatore è il Sindaco: fonda una città su una mappa a griglia, costruisce
+  zone e infrastrutture, gestisce bilancio e ordinanze, e viene valutato ogni
+  anno di gioco con un "Rating ESG" della città.
+- Lo scopo del gioco è raggiungere e mantenere il livello PLATINO dello
+  standard SCE mantenendo il bilancio in equilibrio e i cittadini felici.
+- Filosofia: le scelte "economiche facili" (industria inquinante, centrali a
+  carbone, cemento ovunque) danno soldi rapidi ma degradano ambiente, salute,
+  giustizia sociale e reputazione; le scelte sostenibili costano di più
+  all'inizio ma generano benefici composti nel tempo (come nella realtà).
+
+--------------------------------------------------------------------------------
+2. MECCANICHE BASE (ereditate da SimCity 2000)
+--------------------------------------------------------------------------------
+Mappa e costruzione:
+- Mappa a griglia 64x64 (configurabile 32/64/128), vista dall'alto con stile
+  pseudo-isometrico "retrò anni '90": tile colorati con icone/sprite CSS o
+  canvas 2D. Niente 3D: deve girare fluida nel browser.
+- Terreno con: pianura, colline, acqua (fiume/lago), alberi. Strumenti
+  terreno: spianare, piantare/tagliare alberi, acqua.
+- Zonizzazione RCI: zone Residenziali, Commerciali, Industriali, ciascuna a
+  densità bassa/alta. Le zone si sviluppano da sole nel tempo se hanno:
+  energia, acqua, accesso stradale e domanda (indicatore di domanda RCI
+  visibile come in SC2000).
+- Reti: strade, ferrovia/metro leggera, linee elettriche, tubazioni acqua.
+- Edifici di servizio piazzabili: municipio, stazioni di polizia, caserme dei
+  pompieri, ospedali, scuole, università, biblioteche, parchi, stadi,
+  depuratori, impianti rifiuti, parcheggi, fermate bus/metro.
+- Centrali energetiche con costo, produzione MW, inquinamento e vita utile di
+  50 anni (poi vanno sostituite, come in SC2000): carbone, gas, petrolio,
+  nucleare, idroelettrica, EOLICA, SOLARE. Le fonti rinnovabili costano di
+  più per MW ma hanno inquinamento zero e migliorano il punteggio ESG.
+- Tempo di gioco: simulazione con velocità pausa/1x/2x/4x; un "anno" di gioco
+  = ciclo di bilancio. Ogni gennaio si apre la finestra Bilancio.
+- Bilancio: entrate (tasse su R/C/I regolabili 0–20%, ordinanze con gettito),
+  uscite (manutenzione strade/reti, servizi, quote ordinanze), possibilità di
+  emettere obbligazioni (prestiti con interessi).
+- Ordinanze attivabili/disattivabili (con costo o gettito annuo), tra cui:
+  raccolta differenziata spinta, conservazione energia, controlli
+  anti-inquinamento, sorveglianza di quartiere, campagne salute pubblica,
+  incentivi bici e carpooling, divieto fumo nei luoghi pubblici, trasparenza
+  atti pubblici (anticorruzione), bilancio partecipativo.
+- Disastri (attivabili/disattivabili): incendio, alluvione, tornado. Le città
+  con più verde, suolo permeabile e piani di adattamento subiscono MENO danni
+  (resilienza = meccanica di gioco).
+- Notizie: un "giornale" popup che ogni tanto commenta gli eventi (nuova
+  centrale, picco di smog, premio ecologia, scandalo corruzione...), come i
+  newspaper di SC2000.
+- Finestre informative: mappa tematica (inquinamento, criminalità, valore dei
+  terreni, traffico, copertura servizi), grafici storici, demografia,
+  bilancio, ordinanze, industrie.
+
+--------------------------------------------------------------------------------
+3. MOTORE ESG — IL CUORE DEL GIOCO (dallo standard SCE 001:2026)
+--------------------------------------------------------------------------------
+Ogni anno di gioco il simulatore calcola 7 punteggi di area su scala −1…+5
+(0 = prassi corrente, 3 = buona pratica, 5 = eccellenza), li aggrega con pesi
+e assegna il livello città:
+- BASE: tutti i prerequisiti rispettati
+- ARGENTO: ≥40% del punteggio prestazionale possibile
+- ORO: ≥60%
+- PLATINO: ≥80% con punteggio ≥4 nelle aree A (Verde) e G (Clima)
+
+AREA A — VERDE URBANO E INFRASTRUTTURE VERDI/BLU (peso 18%)
+KPI: m² di verde per abitante (0 pt a 9, 3 pt a 15, 5 pt a ≥25); % copertura
+arborea (15/25/30); % suolo permeabile (30/50/70); % popolazione entro 300 m
+da un parco (60/80/95). Meccaniche: parchi, alberi, tetti verdi, corridoi
+ecologici; il verde riduce l'isola di calore, l'inquinamento e i danni da
+alluvione, e aumenta valore dei terreni e felicità.
+
+AREA B — BIOEDILIZIA ED EFFICIENZA DEGLI EDIFICI (peso 16%)
+KPI: % edifici efficienti/nZEB (bonus con ordinanza "standard edilizi verdi");
+% energia rinnovabile in sito. Meccaniche: retrofit dei quartieri (azione a
+costo che aumenta l'efficienza), edifici pubblici certificati che fanno da
+esempio (bonus di area).
+
+AREA C — MATERIALI ED ECONOMIA CIRCOLARE DEI RIFIUTI (peso 12%)
+KPI: % raccolta differenziata (65/75/85); % riciclo rifiuti da costruzione e
+demolizione (70/85/95). Meccaniche: discarica (economica, inquinante) vs
+centro riciclo vs impianto compostaggio; demolire edifici genera macerie che
+si possono riciclare; ordinanza "differenziata spinta".
+
+AREA D — MOBILITÀ E TRAFFICO (peso 16%)
+KPI: % spostamenti a piedi/bici/mezzi pubblici (40/60/75); copertura fermate
+TPL entro 400 m (50/75/90); % flotta pubblica elettrica (10/50/100); traffico
+medio. Meccaniche: ogni tile stradale genera traffico in base alle zone
+servite; piste ciclabili, corsie bus, metro e Zone 30 riducono traffico e
+smog; parcheggi di interscambio; colonnine di ricarica; il traffico alto
+riduce felicità e salute.
+
+AREA E — CITTÀ A MISURA D'UOMO, SERVIZI E INCLUSIONE (peso 12%)
+KPI: % popolazione entro raggio di servizio di polizia/pompieri/ospedale/
+scuola (la copertura DECENTRATA è premiata: tanti presidi piccoli distribuiti
+battono un mega-centro unico); % spazi accessibili; mix funzionale del
+quartiere. Meccaniche: raggio di copertura visibile per ogni servizio;
+quartieri con mix R+C+servizi hanno bonus vivibilità ("città dei 15 minuti").
+
+AREA F — METABOLISMO URBANO: ACQUA, ENERGIA, SPRECHI (peso 12%)
+KPI: perdite rete idrica % (40/25/15 – le tubazioni invecchiano e vanno
+manutenute, altrimenti le perdite crescono); consumo idrico pro capite;
+% energia da rinnovabili (20/40/60); sprechi energetici (ordinanza
+conservazione energia). Meccaniche: depuratore obbligatorio oltre una certa
+popolazione (prerequisito), torri idriche, riuso acque.
+
+AREA G — CLIMA, RESILIENZA E GOVERNANCE (peso 14%)
+KPI: emissioni CO2 pro capite (6/4/2 tCO2e); giorni di superamento smog
+(35/15/0); indice di corruzione (vedi sotto); criminalità. Meccaniche:
+- Inventario emissioni annuale automatico (somma di centrali, traffico,
+  industria, edifici).
+- GOVERNANCE: esiste un "indice di integrità" 0–100. Eventi casuali di
+  tentata corruzione (appaltatore che offre tangente per una variante,
+  pressioni per condoni edilizi): il giocatore sceglie se accettare (soldi
+  subito, −integrità, rischio scandalo sul giornale con crollo di consenso e
+  multa) o rifiutare (+integrità, +fiducia dei cittadini). L'ordinanza
+  "trasparenza atti" e il "bilancio partecipativo" aumentano l'integrità.
+- Giustizia sociale: se i servizi coprono solo i quartieri ricchi, cresce un
+  indice di disuguaglianza che abbassa il punteggio G e la felicità.
+
+--------------------------------------------------------------------------------
+4. INDICATORI DI SODDISFAZIONE DEL CITTADINO
+--------------------------------------------------------------------------------
+Indice di Felicità (0–100) calcolato da: qualità della vita (verde, salute,
+comfort), qualità e prossimità dei servizi, casa e lavoro disponibili,
+traffico e pendolarismo, inquinamento aria/acqua/rumore, sicurezza
+(criminalità bassa), fiducia nelle istituzioni (integrità alta, tasse eque).
+La felicità guida l'immigrazione/emigrazione: città sostenibili e giuste
+crescono; città inquinate e corrotte si spopolano anche se ricche.
+
+--------------------------------------------------------------------------------
+5. INTERFACCIA UTENTE (layout richiesto)
+--------------------------------------------------------------------------------
+- Schermata principale: canvas mappa al centro; toolbar sinistra con gruppi
+  strumenti (Terreno, Zone, Reti, Energia, Acqua, Servizi, Verde, Rifiuti,
+  Demolisci) in stile SC2000; barra superiore con: nome città, data di gioco,
+  fondi, popolazione, velocità simulazione (pausa/1x/2x/4x).
+- Pannello destro "Cruscotto ESG": gauge del Rating ESG complessivo, 7 barre
+  di area A–G con punteggio −1…+5 colorate (rosso sotto 0, verde sopra 3),
+  badge del livello attuale (Base/Argento/Oro/Platino).
+- Finestre modali: Bilancio, Ordinanze, Mappe tematiche, Grafici storici,
+  Report ESG annuale (pagella con KPI, confronto anno precedente e consigli
+  automatici: "Il quartiere Nord è oltre 300 m dal verde: pianta un parco").
+- Popup giornale per eventi ed esiti delle scelte di governance.
+- Tutorial guidato ai primi 5 minuti (fonda la città, dai energia, zona,
+  guarda il cruscotto ESG).
+- Grafica: tile 2D colorati con sprite semplici (CSS/emoji/SVG inline),
+  estetica retrò pulita; nessun asset esterno protetto da copyright; NON
+  usare nomi/marchi "SimCity" o "Maxis" dentro l'app: titolo visibile
+  "EcoCity ESG".
+
+--------------------------------------------------------------------------------
+6. DATI E ARCHITETTURA (entità Base44)
+--------------------------------------------------------------------------------
+- Entità City: nome, seed mappa, griglia (JSON), fondi, anno, popolazione,
+  punteggi area A–G, rating ESG, livello, integrità, felicità, storico KPI
+  (array per i grafici), ordinanze attive, obbligazioni.
+- Entità SavedGame/slot multipli per utente (autenticazione utenti attiva:
+  ogni utente vede solo le sue città).
+- Classifica pubblica opzionale: le migliori città per Rating ESG.
+- Tutta la logica di simulazione lato client (tick di simulazione in
+  JavaScript); salvataggio periodico e manuale dello stato su entità City.
+- Nessuna API esterna necessaria.
+
+--------------------------------------------------------------------------------
+7. PIANO DI COSTRUZIONE RICHIESTO (in fasi, per iterazioni successive)
+--------------------------------------------------------------------------------
+FASE 1 (MVP): mappa con griglia e terreno, zonizzazione RCI, strade, una
+centrale a carbone + eolico/solare, crescita zone con domanda, fondi e tasse,
+tick temporale, salvataggio.
+FASE 2: acqua, servizi con raggi di copertura, verde/parchi, rifiuti,
+traffico, inquinamento, felicità.
+FASE 3: motore ESG completo (7 aree, punteggi −1…+5, pesi, livelli),
+cruscotto ESG, report annuale, ordinanze.
+FASE 4: eventi di governance/corruzione, giornale, disastri e resilienza,
+grafici storici, mappe tematiche, tutorial, classifica.
+Costruisci ora la FASE 1 e predisponi la struttura dati per le fasi
+successive.
+
+--------------------------------------------------------------------------------
+8. CRITERI DI ACCETTAZIONE
+--------------------------------------------------------------------------------
+1. Una partita nuova è giocabile in <10 secondi dal login.
+2. Zonizzare R+C+I con strada ed energia fa crescere la popolazione.
+3. Costruire solo carbone/discariche/asfalto fa scendere il punteggio ESG
+   sotto lo 0 in 2–3 anni di gioco, con avvisi sul giornale.
+4. Sostituire carbone con eolico+solare e piantare parchi porta l'area A e G
+   sopra 3 e sblocca il badge Oro.
+5. Un evento corruzione accettato produce, entro pochi anni, uno scandalo con
+   perdita di fondi e felicità (dimostrando che "il crimine non paga").
+6. Il report ESG annuale mostra i KPI con i benchmark (0/3/5) e suggerimenti.
+7. Lo stato della città sopravvive a refresh e re-login.
+
+Rispetta questo documento come specifica funzionale. Dove servono dettagli
+non specificati, scegli la soluzione più semplice che preservi la filosofia:
+"la città vince quando vincono l'ambiente, i cittadini e l'onestà".
+================================================================================
+FINE PROMPT
+================================================================================
